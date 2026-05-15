@@ -1,0 +1,45 @@
+// Definición de colores según Guía de Colores del PDF [cite: 51]
+$azure-blue: #00bcff; // Color para el Main Chip / Focus [cite: 51]
+$text-dark: #3d474d;  // Color de texto oscuro según el inspector
+$font-family: "Figtree", "Noto Sans JP", Helvetica, "system-ui", Arial, "sans-serif";
+
+.main-chip {
+    // Geometría: Rectángulo redondeado (píldora) [cite: 6]
+    position: relative;
+    width: fit-content;
+    margin: 0 auto; // Centrado horizontal
+    padding: 18.2px 30px; // Basado en el padding del inspector para equilibrio visual
+    background-color: #ffffff;
+    
+    // Bordes y Esquinas según especificaciones técnicas 
+    border: 4px solid $azure-blue; 
+    border-radius: 16px; 
+
+    // Tipografía: imponente para representar el núcleo [cite: 5]
+    color: $text-dark;
+    font-size: 26px;
+    font-style: normal;
+    font-weight: bold; // Bold intenso según PDF y capturas
+    font-family: $font-family;
+    text-align: center;
+    line-height: 1.25;
+    user-select: none;
+
+    
+
+    // Transición suave para la interacción dinámica [cite: 8, 46]
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+
+    // INTERACCIÓN: Comportamiento dinámico al pasar el ratón 
+    &:hover {
+        // El grosor del borde se percibe más intenso 
+        border-width: 5px;
+        
+        // Activación de sombra externa difuminada (Glow) 
+        box-shadow: 0 0 20px rgba(0, 188, 255, 0.3);
+        
+        // Ligero desplazamiento para dar sensación de "presionable"
+        //transform: translateY(-2px);
+    }
+}
