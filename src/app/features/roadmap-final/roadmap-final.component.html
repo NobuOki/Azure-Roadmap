@@ -1,0 +1,248 @@
+<main class="bg-gray-50 rounded-2xl p-6 flex flex-col gap-4 min-h-screen">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <header class="flex justify-between items-start">
+
+    <div class="flex flex-col gap-0.5">
+      <h1 class="text-xl font-medium text-gray-900 tracking-tight">Azure AZ-900</h1>
+      <p class="text-sm text-gray-400">Dashboard interactivo de aprendizaje</p>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-right flex flex-col items-end gap-0.5">
+      <span class="text-2xl font-medium text-gray-900 leading-none">{{ overallProgress() }}%</span>
+      <span class="text-[10px] uppercase tracking-widest text-gray-400">overall progress</span>
+    </div>
+
+  </header>
+
+  <!-- ── Stat Cards ──────────────────────────────────────────────────────── -->
+  <section class="grid grid-cols-3 gap-2.5" aria-label="Estadísticas rápidas">
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm">
+      <i class="ti ti-topology-star text-teal-700 text-xl mb-1" aria-hidden="true"></i>
+      <span class="text-xl font-medium text-gray-900">{{ activeModulesCount() }}/{{ modules().length }}</span>
+      <span class="text-[11px] text-gray-400">módulos iniciados</span>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm">
+      <i class="ti ti-clock text-blue-700 text-xl mb-1" aria-hidden="true"></i>
+      <span class="text-xl font-medium text-gray-900">{{ studyHours() }}h</span>
+      <span class="text-[11px] text-gray-400">tiempo de estudio</span>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm">
+      <i class="ti ti-flame text-amber-700 text-xl mb-1" aria-hidden="true"></i>
+      <span class="text-xl font-medium text-gray-900">{{ studyStreak() }}d</span>
+      <span class="text-[11px] text-gray-400">racha de estudio</span>
+    </div>
+
+  </section>
+
+  <!-- ── Main Grid ───────────────────────────────────────────────────────── -->
+  <section class="grid grid-cols-[1fr_220px] gap-2.5 items-start">
+
+    <!-- Conceptualmap Card -->
+    <div class="bg-white border border-gray-200 rounded-xl p-4">      
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="flex flex-col gap-2.5" aria-label="Detalle del módulo">
+
+      <!-- Anillo de progreso global -->
+      <div class="bg-white border border-gray-200 rounded-xl p-3.5 text-center">
+
+        <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-2.5">Progreso global</p>
+
+        <svg
+          class="block mx-auto"
+          viewBox="0 0 80 80"
+          width="80"
+          height="80"
+          role="img"
+          [attr.aria-label]="overallProgress() + '% de progreso general'">
+          <circle cx="40" cy="40" r="32"
+            fill="none"
+            stroke="#e5e7eb"
+            stroke-width="6" />
+          <circle
+            cx="40" cy="40" r="32"
+            fill="none"
+            stroke="#1d4ed8"
+            stroke-width="6"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="2 * 3.14159 * 32"
+            [attr.stroke-dashoffset]="ringOffset()"
+            transform="rotate(-90 40 40)"
+            class="ring-transition" />
+          <text
+            x="40" y="45"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="500"
+            fill="#1d4ed8">
+            {{ overallProgress() }}%
+          </text>
+        </svg>
+
+      </div>
+
+      <!-- Detalle del módulo seleccionado -->
+      <div class="bg-white border border-gray-200 rounded-xl p-3.5">
+
+        <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-1.5">Módulo activo</p>
+        <h2 class="text-[15px] font-medium text-gray-900 mb-0.5">{{ selectedModule().name }}</h2>
+        <p class="text-[11px] text-gray-400 mb-3">
+          Módulo {{ selectedModule().id }} de {{ modules().length }} · {{ selectedModule().progress }}%
+        </p>
+
+        <ul class="flex flex-col" role="list">
+
+          @for (sub of selectedModule().subtopics; track sub.name) {
+
+            <li class="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-b-0 last:pb-0">
+
+              <span
+                [ngClass]="{
+                  'bg-teal-700':  sub.status === 'done',
+                  'bg-blue-700':  sub.status === 'active',
+                  'bg-gray-200':  sub.status === 'pending'
+                }"
+                class="w-1.5 h-1.5 rounded-full shrink-0"
+                aria-hidden="true">
+              </span>
+
+              <span class="text-[11px] text-gray-800 flex-1">{{ sub.name }}</span>
+
+              @if (sub.status === 'done') {
+                <i class="ti ti-check text-[12px] text-teal-700" aria-label="Completado"></i>
+              } @else if (sub.status === 'active') {
+                <i class="ti ti-player-play text-[12px] text-blue-700" aria-label="En curso"></i>
+              } @else {
+                <span class="text-[11px] text-gray-300" aria-label="Pendiente">—</span>
+              }
+
+            </li>
+
+          }
+
+        </ul>
+
+      </div>
+
+    </aside>
+
+    <!-- Roadmap Card -->
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+
+      <p class="text-[10px] uppercase tracking-[0.14em] text-gray-400 mb-3.5">
+        Roadmap — módulos del examen
+      </p>
+
+      <ul class="flex flex-col gap-2" role="list">
+
+        @for (module of modules(); track module.id) {
+
+          <li
+            [ngClass]="{
+              'bg-teal-50  border-teal-200':  module.status === 'completed',
+              'bg-blue-50  border-blue-200':  module.status === 'in-progress',
+              'bg-gray-100 border-gray-200 opacity-60': module.status === 'locked',
+              'ring-2 ring-blue-600 opacity-100': selectedModuleId() === module.id,
+              'cursor-pointer hover:-translate-y-px hover:shadow-md': module.status !== 'locked',
+              'cursor-default': module.status === 'locked'
+            }"
+            class="rounded-lg px-3.5 py-3 flex items-center gap-3 border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            (click)="selectModule(module)"
+            [attr.aria-current]="selectedModuleId() === module.id ? 'true' : null"
+            [attr.aria-disabled]="module.status === 'locked'"
+            role="button"
+            [tabindex]="module.status !== 'locked' ? 0 : -1"
+            (keydown.enter)="selectModule(module)"
+            (keydown.space)="selectModule(module)">
+
+            <!-- Badge numérico -->
+            <div
+              [ngClass]="{
+                'bg-teal-700 text-teal-50':  module.status === 'completed',
+                'bg-blue-700 text-blue-50':  module.status === 'in-progress',
+                'bg-gray-300 text-gray-500': module.status === 'locked'
+              }"
+              class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+              {{ module.id }}
+            </div>
+
+            <!-- Cuerpo -->
+            <div class="flex-1 flex flex-col gap-0.5 min-w-0">
+
+              <span
+                [ngClass]="{
+                  'text-teal-900': module.status === 'completed',
+                  'text-blue-900': module.status === 'in-progress',
+                  'text-gray-400': module.status === 'locked'
+                }"
+                class="text-[13px] font-medium truncate">
+                {{ module.name }}
+              </span>
+
+              <span
+                [ngClass]="{
+                  'text-teal-700': module.status === 'completed',
+                  'text-blue-700': module.status === 'in-progress',
+                  'text-gray-400': module.status === 'locked'
+                }"
+                class="text-[11px]">
+                {{ module.description }}
+              </span>
+
+              @if (module.status !== 'locked') {
+                <!-- Progress bar -->
+                <div
+                  [ngClass]="{
+                    'bg-teal-200': module.status === 'completed',
+                    'bg-blue-200': module.status === 'in-progress'
+                  }"
+                  class="h-[3px] rounded-full overflow-hidden mt-1.5"
+                  role="progressbar"
+                  [attr.aria-valuenow]="module.progress"
+                  aria-valuemin="0"
+                  aria-valuemax="100">
+                  <div
+                    [ngClass]="{
+                      'bg-teal-700': module.status === 'completed',
+                      'bg-blue-700': module.status === 'in-progress'
+                    }"
+                    class="h-full rounded-full transition-all duration-500"
+                    [style.width.%]="module.progress">
+                  </div>
+                </div>
+              }
+
+            </div>
+
+            <!-- Porcentaje o candado -->
+            @if (module.status === 'locked') {
+              <i class="ti ti-lock text-sm text-gray-400 shrink-0" aria-label="Bloqueado"></i>
+            } @else {
+              <span
+                [ngClass]="{
+                  'text-teal-700': module.status === 'completed',
+                  'text-blue-700': module.status === 'in-progress'
+                }"
+                class="text-xs font-medium shrink-0">
+                {{ module.progress }}%
+              </span>
+            }
+
+          </li>
+
+        }
+
+      </ul>
+
+    </div>
+
+    
+
+  </section>
+
+</main>

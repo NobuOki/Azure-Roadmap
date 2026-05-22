@@ -1,10 +1,10 @@
 import { Component, signal } from '@angular/core';
-import { RoadmapComponent } from './features/roadmap/roadmap.component';
+import { Az900DashboardComponent } from './features/roadmap-final/roadmap-final.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RoadmapComponent], // Añade el componente aquí
+  imports: [Az900DashboardComponent], // Añade el componente aquí
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

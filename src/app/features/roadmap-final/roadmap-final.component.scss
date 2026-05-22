@@ -1,0 +1,28 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// az900-dashboard.component.scss
+//
+// Solo contiene lo que Tailwind NO puede expresar con clases puras:
+//   1. border de 0.5px  (Tailwind mínimo es 1px con `border`)
+//   2. Transición del stroke-dashoffset en el SVG (no es una propiedad CSS normal)
+//   3. Tabler Icons (webfont externo, no manejado por Tailwind)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 1. Bordes ultra-finos en tarjetas (0.5px no existe en Tailwind por defecto)
+//    Tailwind tiene `border` = 1px, `border-2` = 2px.
+//    Si prefieres no tocar el SCSS, puedes usar `border` (1px) directamente
+//    en las clases y el resultado visual es casi idéntico.
+//    Esta regla sobreescribe el border de las cards:
+.border {
+  border-width: 0.5px !important;
+}
+
+// 2. Transición del anillo SVG (stroke-dashoffset)
+//    Tailwind anima `opacity`, `transform`, `color`, etc. pero NO propiedades
+//    SVG como stroke-dashoffset. Se necesita CSS puro.
+.ring-transition {
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+// 3. Tabler Icons — importar el webfont si no lo agregaste en index.html
+//    (Alternativa: agrégalo en index.html como <link> y borrar esta línea)
+// @import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css');
