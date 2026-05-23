@@ -164,63 +164,63 @@
           </div>
     
           @if (joint1()) {
-          <!-- Branch L1: Conceptos de Nube -->
-          <div class="absolute left-[90px] top-[127px]">
-            <button class="rounded-xl bg-[#3b71fe] px-4 py-2 text-white shadow-md
-                          transition duration-200 hover:scale-105 hover:brightness-110">
-              <span class="text-sm font-semibold">Conceptos de Nube</span>
-            </button>
-          </div>
-    
-          <!-- Sub-branch L2: Azure Policy -->
-          <div class="absolute left-[145px] top-[196px]">
-            <div class="rounded-xl border-[3px] border-[#3b71fe] bg-white px-3 py-1.5
-                              shadow-sm transition duration-200 hover:scale-105">
-              <span class="text-sm font-medium text-slate-700">Azure Policy</span>
+            <!-- Branch L1: Conceptos de Nube -->
+            <div class="absolute left-[90px] top-[127px]">
+              <button class="rounded-xl bg-[#3b71fe] px-4 py-2 text-white shadow-md
+                                      transition duration-200 hover:scale-105 hover:brightness-110">
+                <span class="text-sm font-semibold">Conceptos de Nube</span>
+              </button>
             </div>
-          </div>
-    
-          <!-- Sub-branch L2: Cost Management -->
-          <div class="absolute left-[145px] top-[266px]">
-            <button class="flex items-center gap-2 rounded-xl border-[3px] border-[#3b71fe]
-                          bg-white px-3 py-1.5 shadow-sm transition duration-200 hover:scale-105"
-              (click)="toggleJoint(jointCost)">
-              <span class="text-sm font-medium text-slate-700">Cost Management</span>
-              <span class="text-[10px] text-[#3b71fe] transition duration-300" [class.rotate-180]="jointCost()">▼</span>
-            </button>
-          </div>
-    
-          @if (jointCost()) {
-          <!-- Nested L3: Iniciativas -->
-          <div class="absolute left-[255px] top-[336px]">
-            <div class="rounded-xl border-2 border-dashed border-[#3b71fe] bg-white
-                                px-3 py-1.5 transition duration-200 hover:scale-105">
-              <span class="text-sm text-gray-400">Iniciativas</span>
+            
+            <!-- Sub-branch L2: Azure Policy -->
+            <div class="absolute left-[145px] top-[196px]">
+              <div class="rounded-xl border-[3px] border-[#3b71fe] bg-white px-3 py-1.5
+                                          shadow-sm transition duration-200 hover:scale-105">
+                <span class="text-sm font-medium text-slate-700">Azure Policy</span>
+              </div>
             </div>
-          </div>
-          }
+            
+            <!-- Sub-branch L2: Cost Management -->
+            <div class="absolute left-[145px] top-[266px]">
+              <button class="flex items-center gap-2 rounded-xl border-[3px] border-[#3b71fe]
+                                      bg-white px-3 py-1.5 shadow-sm transition duration-200 hover:scale-105"
+                (click)="toggleJoint(jointCost)">
+                <span class="text-sm font-medium text-slate-700">Cost Management</span>
+                <span class="text-[10px] text-[#3b71fe] transition duration-300" [class.rotate-180]="jointCost()">▼</span>
+              </button>
+            </div>
+            
+            @if (jointCost()) {
+            <!-- Nested L3: Iniciativas -->
+            <div class="absolute left-[255px] top-[336px]">
+              <div class="rounded-xl border-2 border-dashed border-[#3b71fe] bg-white
+                                            px-3 py-1.5 transition duration-200 hover:scale-105">
+                <span class="text-sm text-gray-400">Iniciativas</span>
+              </div>
+            </div>
+            }
           }
     
           @if (joint2()) {
-          <!-- Branch L1: Administración y Gobernanza -->
-          <div class="absolute left-[90px] top-[371px]">
-            <button class="rounded-xl bg-[#a676f2] px-4 py-2 text-white shadow-md
-                          transition duration-200 hover:scale-105 hover:brightness-110">
-              <span class="text-sm font-semibold whitespace-nowrap">
-                Administración y Gobernanza
-              </span>
-            </button>
-          </div>
+            <!-- Branch L1: Administración y Gobernanza -->
+            <div class="absolute left-[90px] top-[371px]">
+              <button class="rounded-xl bg-[#a676f2] px-4 py-2 text-white shadow-md
+                            transition duration-200 hover:scale-105 hover:brightness-110">
+                <span class="text-sm font-semibold whitespace-nowrap">
+                  Administración y Gobernanza
+                </span>
+              </button>
+            </div>
           }
     
           @if (joint3()) {
-          <!-- Branch L1: Arquitectura y Servicios -->
-          <div class="absolute left-[90px] top-[461px]">
-            <button class="rounded-xl bg-[#f25a8a] px-4 py-2 text-white shadow-md
-                          transition duration-200 hover:scale-105 hover:brightness-110">
-              <span class="text-sm font-semibold">Arquitectura y Servicios</span>
-            </button>
-          </div>
+            <!-- Branch L1: Arquitectura y Servicios -->
+            <div class="absolute left-[90px] top-[461px]">
+              <button class="rounded-xl bg-[#f25a8a] px-4 py-2 text-white shadow-md
+                            transition duration-200 hover:scale-105 hover:brightness-110">
+                <span class="text-sm font-semibold">Arquitectura y Servicios</span>
+              </button>
+            </div>
           }
     
         </div><!-- /map-inner -->
