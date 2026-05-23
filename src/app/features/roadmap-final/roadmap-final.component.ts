@@ -8,7 +8,7 @@
 })
 export class RoadmapFinalComponent {} */
 
-import { Component, computed, signal, WritableSignal } from '@angular/core';
+import { Component, computed, signal, WritableSignal, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule, NgClass } from '@angular/common';
 
 export type ModuleStatus = 'completed' | 'in-progress' | 'locked';
@@ -37,9 +37,88 @@ export interface RoadmapModule {
 })
 export class Az900DashboardComponent {
 
+  // ── Canvas ref (para calcular posición relativa del mouse) ────────────────
+  @ViewChild('canvasRef') canvasRef!: ElementRef<HTMLDivElement>;
+
   // ── Stats ──────────────────────────────────────────────────────────────────
   studyHours  = signal(12);
   studyStreak = signal(8);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ZOOM + PAN
+  // ─────────────────────────────────────────────────────────────────────────
+ 
+  // Estado del canvas
+  zoom  = signal(0.8);   // escala inicial: 80% para que entre el mapa completo
+  panX  = signal(0);     // desplazamiento X en px
+  panY  = signal(0);     // desplazamiento Y en px
+ 
+  // Estado del drag
+  isDragging   = signal(false);
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private panStartX  = 0;
+  private panStartY  = 0;
+ 
+  // Transform CSS calculado — se bindea en el template con [style.transform]
+  mapTransform = computed(() =>
+    `scale(${this.zoom()}) translate(${this.panX()}px, ${this.panY()}px)`
+  );
+ 
+  // ── Zoom con botones ──────────────────────────────────────────────────────
+  private readonly ZOOM_STEP = 0.1;
+  private readonly ZOOM_MIN  = 0.3;
+  private readonly ZOOM_MAX  = 2.0;
+ 
+  zoomIn(): void {
+    this.zoom.update(z => Math.min(this.ZOOM_MAX, +(z + this.ZOOM_STEP).toFixed(2)));
+  }
+ 
+  zoomOut(): void {
+    this.zoom.update(z => Math.max(this.ZOOM_MIN, +(z - this.ZOOM_STEP).toFixed(2)));
+  }
+ 
+  // ── Zoom con Ctrl + scroll ────────────────────────────────────────────────
+  onWheel(e: WheelEvent): void {
+    if (!e.ctrlKey) return;   // sin Ctrl → scroll normal del OS
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -this.ZOOM_STEP : this.ZOOM_STEP;
+    this.zoom.update(z =>
+      Math.min(this.ZOOM_MAX, Math.max(this.ZOOM_MIN, +(z + delta).toFixed(2)))
+    );
+  }
+ 
+  // ── Pan con click + drag ──────────────────────────────────────────────────
+  onMouseDown(e: MouseEvent): void {
+    // Solo botón izquierdo
+    if (e.button !== 0) return;
+    this.isDragging.set(true);
+    this.dragStartX = e.clientX;
+    this.dragStartY = e.clientY;
+    this.panStartX  = this.panX();
+    this.panStartY  = this.panY();
+  }
+ 
+  onMouseMove(e: MouseEvent): void {
+    if (!this.isDragging()) return;
+    // El desplazamiento del mouse se divide por zoom para que
+    // el movimiento sea proporcional a la escala actual
+    const dx = (e.clientX - this.dragStartX) / this.zoom();
+    const dy = (e.clientY - this.dragStartY) / this.zoom();
+    this.panX.set(this.panStartX + dx);
+    this.panY.set(this.panStartY + dy);
+  }
+ 
+  onMouseUp(): void {
+    this.isDragging.set(false);
+  }
+ 
+  // ── Reset: vuelve al estado inicial ──────────────────────────────────────
+  resetCanvas(): void {
+    this.zoom.set(0.8);
+    this.panX.set(0);
+    this.panY.set(0);
+  }
 
   // ── Conceptual Map: joints (interruptores de expansión) ──────────────────
   //
@@ -53,6 +132,10 @@ export class Az900DashboardComponent {
   joint2    = signal(false);
   joint3    = signal(false);
   jointCost = signal(false);
+
+  toggleJoint(j: WritableSignal<boolean>): void {
+    j.update(v => !v);
+  }
 
   // ── Roadmap data ───────────────────────────────────────────────────────────
   modules = signal<RoadmapModule[]>([
@@ -123,11 +206,7 @@ export class Az900DashboardComponent {
 
   selectedModule = computed(() =>
     this.modules().find(m => m.id === this.selectedModuleId()) ?? this.modules()[2]
-  );
-
-  toggleJoint(j: WritableSignal<boolean>): void {
-    j.update(v => !v);
-  }
+  );  
 
   // ── Computed ───────────────────────────────────────────────────────────────
   overallProgress = computed(() => {

@@ -42,169 +42,196 @@
   <section class="grid grid-cols-[1fr_220px] gap-2.5 items-start">
 
     <!-- Conceptualmap Card -->
-    <!--<div class="bg-white border border-gray-200 rounded-xl p-4">-->
-
+    <!-- ── Conceptual Map Card ──────────────────────────────────────────────── -->
     <section class="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4">
-
+    
       <!-- Header del card -->
       <div class="mb-3 flex items-center justify-between">
         <h2 class="text-sm font-medium text-gray-900">Mapa Conceptual</h2>
-        <span class="rounded-full bg-[#00bcff]/10 px-2.5 py-0.5 text-[10px] font-medium text-[#00bcff]">
-          AZ-900
-        </span>
+    
+        <!-- Controles de zoom -->
+        <div class="flex items-center gap-1.5">
+    
+          <!-- Botón reset -->
+          <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
+                      bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700" (click)="resetCanvas()"
+            title="Restablecer vista">
+            <i class="ti ti-home text-[13px]"></i>
+          </button>
+    
+          <div class="h-4 w-px bg-gray-200"></div>
+    
+          <!-- Botón zoom out -->
+          <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
+                      bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
+                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomOut()" [disabled]="zoom() <= 0.3"
+            title="Alejar">
+            <i class="ti ti-minus text-[13px]"></i>
+          </button>
+    
+          <!-- Indicador de zoom actual -->
+          <span class="min-w-[38px] text-center text-[11px] font-medium text-gray-500">
+            {{ (zoom() * 100).toFixed(0) }}%
+          </span>
+    
+          <!-- Botón zoom in -->
+          <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
+                      bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
+                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomIn()" [disabled]="zoom() >= 2"
+            title="Acercar">
+            <i class="ti ti-plus text-[13px]"></i>
+          </button>
+    
+        </div>
       </div>
-      
-      <!-- Canvas: alto fijo + scroll interno -->
-      <div class="relative h-[500px] overflow-auto rounded-lg bg-slate-50">
-      
-        <!-- ── CAPA 1: SVG (spine + branch lines + joints) ──────────────────── -->
-        <svg class="absolute inset-0 h-full w-full" viewBox="0 0 480 580" fill="none">
-      
-          <defs>
-            <linearGradient id="spineGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#3b71fe" />
-              <stop offset="50%" stop-color="#a676f2" />
-              <stop offset="100%" stop-color="#f25a8a" />
-            </linearGradient>
-          </defs>
-      
-          <!-- Central Spine -->
-          <path d="M55 62 L55 515" stroke="url(#spineGrad)" stroke-width="6" stroke-linecap="round" />
-      
-          <!-- Terminal: doble anillo al final de la spine -->
-          <circle cx="55" cy="515" r="9" fill="white" stroke="#f25a8a" stroke-width="3" />
-          <circle cx="55" cy="515" r="4" fill="#f25a8a" />
-      
-          <!-- ── Joint 1 — Conceptos de Nube ──────────────────────────────── -->
-          <!-- Estado expand: punto interior relleno                            -->
-          <!-- Estado collapse: punto interior vacío                            -->
-          <circle cx="55" cy="128" r="8" fill="white" stroke="#3b71fe" stroke-width="3" class="cursor-pointer"
-            (click)="toggleJoint(joint1)" />
-          <circle cx="55" cy="128" r="4" [attr.fill]="joint1() ? '#3b71fe' : 'white'" class="cursor-pointer"
-            (click)="toggleJoint(joint1)" />
-      
+    
+      <!-- Canvas: altura fija + overflow hidden -->
+      <!-- El pan y zoom se aplican al div interno, no al canvas -->
+      <div #canvasRef class="relative h-[400px] overflow-hidden rounded-lg bg-slate-50
+                  select-none" [class.cursor-grab]="!isDragging()" [class.cursor-grabbing]="isDragging()"
+        (mousedown)="onMouseDown($event)" (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()"
+        (mouseleave)="onMouseUp()" (wheel)="onWheel($event)">
+    
+        <!-- Mapa interno: aquí se aplica transform de zoom + pan -->
+        <div class="absolute inset-0 origin-top-left" [style.transform]="mapTransform()">
+    
+          <!-- ── CAPA 1: SVG ────────────────────────────────────────────────── -->
+          <svg class="absolute inset-0 h-full w-full" viewBox="0 0 480 580" fill="none">
+    
+            <defs>
+              <linearGradient id="spineGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#3b71fe" />
+                <stop offset="50%" stop-color="#a676f2" />
+                <stop offset="100%" stop-color="#f25a8a" />
+              </linearGradient>
+            </defs>
+    
+            <!-- Central Spine -->
+            <path d="M55 62 L55 515" stroke="url(#spineGrad)" stroke-width="6" stroke-linecap="round" />
+    
+            <!-- Terminal: doble anillo -->
+            <circle cx="55" cy="515" r="9" fill="white" stroke="#f25a8a" stroke-width="3" />
+            <circle cx="55" cy="515" r="4" fill="#f25a8a" />
+    
+            <!-- ── Joint 1 — Conceptos de Nube ───────────────────────────── -->
+            <circle cx="55" cy="128" r="8" fill="white" stroke="#3b71fe" stroke-width="3" class="cursor-pointer"
+              (click)="toggleJoint(joint1)" />
+            <circle cx="55" cy="128" r="4" [attr.fill]="joint1() ? '#3b71fe' : 'white'" class="cursor-pointer"
+              (click)="toggleJoint(joint1)" />
+    
+            @if (joint1()) {
+            <path d="M55 128 Q55 145 90 145" stroke="#3b71fe" stroke-width="5" stroke-linecap="round" />
+            <path d="M110 163 L110 292" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
+            <path d="M110 212 L145 212" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
+            <path d="M110 282 L145 282" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
+    
+            @if (jointCost()) {
+            <path d="M220 300 L220 348 Q220 355 255 355" stroke="#3b71fe" stroke-width="3" stroke-dasharray="6 4"
+              stroke-linecap="round" />
+            }
+            }
+    
+            <!-- ── Joint 2 — Administración y Gobernanza ─────────────────── -->
+            <circle cx="55" cy="372" r="8" fill="white" stroke="#a676f2" stroke-width="3" class="cursor-pointer"
+              (click)="toggleJoint(joint2)" />
+            <circle cx="55" cy="372" r="4" [attr.fill]="joint2() ? '#a676f2' : 'white'" class="cursor-pointer"
+              (click)="toggleJoint(joint2)" />
+    
+            @if (joint2()) {
+            <path d="M55 372 Q55 390 90 390" stroke="#a676f2" stroke-width="5" stroke-linecap="round" />
+            }
+    
+            <!-- ── Joint 3 — Arquitectura y Servicios ────────────────────── -->
+            <circle cx="55" cy="462" r="8" fill="white" stroke="#f25a8a" stroke-width="3" class="cursor-pointer"
+              (click)="toggleJoint(joint3)" />
+            <circle cx="55" cy="462" r="4" [attr.fill]="joint3() ? '#f25a8a' : 'white'" class="cursor-pointer"
+              (click)="toggleJoint(joint3)" />
+    
+            @if (joint3()) {
+            <path d="M55 462 Q55 480 90 480" stroke="#f25a8a" stroke-width="5" stroke-linecap="round" />
+            }
+    
+          </svg>
+    
+          <!-- ── CAPA 2: Nodos HTML ─────────────────────────────────────────── -->
+    
+          <!-- Main Chip -->
+          <div class="absolute left-[10px] top-[15px]">
+            <div class="rounded-2xl border-[3px] border-[#00bcff] bg-white px-4 py-2 shadow-sm
+                            transition duration-200 hover:shadow-[0_0_14px_rgba(0,188,255,0.35)]">
+              <span class="text-sm font-bold tracking-tight text-slate-700">AZURE AZ-900</span>
+            </div>
+          </div>
+    
           @if (joint1()) {
-          <!-- Branch line principal: spine → Conceptos de Nube -->
-          <!-- Curva Bézier cuadrática Q: nace en spine y gira 90° al nodo   -->
-          <path d="M55 128 Q55 145 90 145" stroke="#3b71fe" stroke-width="5" stroke-linecap="round" />
-      
-          <!-- Sub-spine vertical: columna de hijos de Conceptos              -->
-          <path d="M110 163 L110 292" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
-      
-          <!-- Sub-branch line → Azure Policy -->
-          <path d="M110 212 L145 212" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
-      
-          <!-- Sub-branch line → Cost Management -->
-          <path d="M110 282 L145 282" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
-      
+          <!-- Branch L1: Conceptos de Nube -->
+          <div class="absolute left-[90px] top-[127px]">
+            <button class="rounded-xl bg-[#3b71fe] px-4 py-2 text-white shadow-md
+                          transition duration-200 hover:scale-105 hover:brightness-110">
+              <span class="text-sm font-semibold">Conceptos de Nube</span>
+            </button>
+          </div>
+    
+          <!-- Sub-branch L2: Azure Policy -->
+          <div class="absolute left-[145px] top-[196px]">
+            <div class="rounded-xl border-[3px] border-[#3b71fe] bg-white px-3 py-1.5
+                              shadow-sm transition duration-200 hover:scale-105">
+              <span class="text-sm font-medium text-slate-700">Azure Policy</span>
+            </div>
+          </div>
+    
+          <!-- Sub-branch L2: Cost Management -->
+          <div class="absolute left-[145px] top-[266px]">
+            <button class="flex items-center gap-2 rounded-xl border-[3px] border-[#3b71fe]
+                          bg-white px-3 py-1.5 shadow-sm transition duration-200 hover:scale-105"
+              (click)="toggleJoint(jointCost)">
+              <span class="text-sm font-medium text-slate-700">Cost Management</span>
+              <span class="text-[10px] text-[#3b71fe] transition duration-300" [class.rotate-180]="jointCost()">▼</span>
+            </button>
+          </div>
+    
           @if (jointCost()) {
-          <!-- Nested line punteada → Iniciativas (Level 3)                  -->
-          <!-- Desciende desde Cost y gira derecha con Bézier               -->
-          <path d="M220 300 L220 348 Q220 355 255 355" stroke="#3b71fe" stroke-width="3" stroke-dasharray="6 4"
-            stroke-linecap="round" />
+          <!-- Nested L3: Iniciativas -->
+          <div class="absolute left-[255px] top-[336px]">
+            <div class="rounded-xl border-2 border-dashed border-[#3b71fe] bg-white
+                                px-3 py-1.5 transition duration-200 hover:scale-105">
+              <span class="text-sm text-gray-400">Iniciativas</span>
+            </div>
+          </div>
           }
           }
-      
-          <!-- ── Joint 2 — Administración y Gobernanza ────────────────────── -->
-          <circle cx="55" cy="372" r="8" fill="white" stroke="#a676f2" stroke-width="3" class="cursor-pointer"
-            (click)="toggleJoint(joint2)" />
-          <circle cx="55" cy="372" r="4" [attr.fill]="joint2() ? '#a676f2' : 'white'" class="cursor-pointer"
-            (click)="toggleJoint(joint2)" />
-      
+    
           @if (joint2()) {
-          <path d="M55 372 Q55 390 90 390" stroke="#a676f2" stroke-width="5" stroke-linecap="round" />
+          <!-- Branch L1: Administración y Gobernanza -->
+          <div class="absolute left-[90px] top-[371px]">
+            <button class="rounded-xl bg-[#a676f2] px-4 py-2 text-white shadow-md
+                          transition duration-200 hover:scale-105 hover:brightness-110">
+              <span class="text-sm font-semibold whitespace-nowrap">
+                Administración y Gobernanza
+              </span>
+            </button>
+          </div>
           }
-      
-          <!-- ── Joint 3 — Arquitectura y Servicios ───────────────────────── -->
-          <circle cx="55" cy="462" r="8" fill="white" stroke="#f25a8a" stroke-width="3" class="cursor-pointer"
-            (click)="toggleJoint(joint3)" />
-          <circle cx="55" cy="462" r="4" [attr.fill]="joint3() ? '#f25a8a' : 'white'" class="cursor-pointer"
-            (click)="toggleJoint(joint3)" />
-      
+    
           @if (joint3()) {
-          <path d="M55 462 Q55 480 90 480" stroke="#f25a8a" stroke-width="5" stroke-linecap="round" />
+          <!-- Branch L1: Arquitectura y Servicios -->
+          <div class="absolute left-[90px] top-[461px]">
+            <button class="rounded-xl bg-[#f25a8a] px-4 py-2 text-white shadow-md
+                          transition duration-200 hover:scale-105 hover:brightness-110">
+              <span class="text-sm font-semibold">Arquitectura y Servicios</span>
+            </button>
+          </div>
           }
-      
-        </svg>
-      
-        <!-- ── CAPA 2: Nodos HTML (absolute sobre el SVG) ───────────────────── -->
-      
-        <!-- Main Chip: nodo raíz AZURE AZ-900 -->
-        <!-- border-[3px] = valor arbitrario porque Tailwind solo tiene border-2 (2px) -->
-        <div class="absolute left-[10px] top-[15px]">
-          <div class="rounded-2xl border-[3px] border-[#00bcff] bg-white px-4 py-2 shadow-sm
-                              transition duration-200 hover:shadow-[0_0_14px_rgba(0,188,255,0.35)]">
-            <span class="text-sm font-bold tracking-tight text-slate-700">AZURE AZ-900</span>
-          </div>
-        </div>
-      
-        <!-- ── Branch L1: Conceptos de Nube ────────────────────────────────── -->
-        <!-- Controlado por joint1. Fondo sólido azul, texto blanco             -->
-        @if (joint1()) {
-        <div class="absolute left-[90px] top-[127px]">
-          <button class="rounded-xl bg-[#3b71fe] px-4 py-2 text-left text-white shadow-md
-                            transition duration-200 hover:scale-105 hover:brightness-110">
-            <span class="text-sm font-semibold">Conceptos de Nube</span>
-          </button>
-        </div>
-      
-        <!-- Sub-branch L2: Azure Policy -->
-        <!-- Outline box: fondo blanco, borde 3px color madre                -->
-        <div class="absolute left-[145px] top-[196px]">
-          <div class="rounded-xl border-[3px] border-[#3b71fe] bg-white px-3 py-1.5 shadow-sm
-                                transition duration-200 hover:scale-105">
-            <span class="text-sm font-medium text-slate-700">Azure Policy</span>
-          </div>
-        </div>
-      
-        <!-- Sub-branch L2: Cost Management (tiene hijos → botón con toggle) -->
-        <div class="absolute left-[145px] top-[266px]">
-          <button class="flex items-center gap-2 rounded-xl border-[3px] border-[#3b71fe] bg-white
-                            px-3 py-1.5 shadow-sm transition duration-200 hover:scale-105" (click)="toggleJoint(jointCost)">
-            <span class="text-sm font-medium text-slate-700">Cost Management</span>
-            <!-- Chevron que rota cuando se expande -->
-            <span class="text-[10px] text-[#3b71fe] transition duration-300" [class.rotate-180]="jointCost()">▼</span>
-          </button>
-        </div>
-      
-        <!-- Nested L3: Iniciativas -->
-        <!-- Dashed box: fondo blanco, borde punteado 2px, texto gris        -->
-        @if (jointCost()) {
-        <div class="absolute left-[255px] top-[336px]">
-          <div class="rounded-xl border-2 border-dashed border-[#3b71fe] bg-white
-                                  px-3 py-1.5 transition duration-200 hover:scale-105">
-            <span class="text-sm text-gray-400">Iniciativas</span>
-          </div>
-        </div>
-        }
-        }
-      
-        <!-- ── Branch L1: Administración y Gobernanza ───────────────────────── -->
-        @if (joint2()) {
-        <div class="absolute left-[90px] top-[371px]">
-          <button class="rounded-xl bg-[#a676f2] px-4 py-2 text-left text-white shadow-md
-                            transition duration-200 hover:scale-105 hover:brightness-110">
-            <span class="text-sm font-semibold whitespace-nowrap">
-              Administración y Gobernanza
-            </span>
-          </button>
-        </div>
-        }
-      
-        <!-- ── Branch L1: Arquitectura y Servicios ──────────────────────────── -->
-        @if (joint3()) {
-        <div class="absolute left-[90px] top-[461px]">
-          <button class="rounded-xl bg-[#f25a8a] px-4 py-2 text-left text-white shadow-md
-                            transition duration-200 hover:scale-105 hover:brightness-110">
-            <span class="text-sm font-semibold">Arquitectura y Servicios</span>
-          </button>
-        </div>
-        }
-      
-      </div>
-      
-    </section>            
-    <!--</div>-->
+    
+        </div><!-- /map-inner -->
+      </div><!-- /canvas -->
+    
+      <!-- Hint de uso -->
+      <p class="mt-2 text-[10px] text-gray-300">
+        Arrastra para mover · Ctrl+scroll para zoom
+      </p>
+    
+    </section>
 
     <!-- Sidebar -->
     <aside class="flex flex-col gap-2.5" aria-label="Detalle del módulo">
