@@ -8,7 +8,7 @@
 })
 export class RoadmapFinalComponent {} */
 
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, WritableSignal } from '@angular/core';
 import { CommonModule, NgClass } from '@angular/common';
 
 export type ModuleStatus = 'completed' | 'in-progress' | 'locked';
@@ -40,6 +40,19 @@ export class Az900DashboardComponent {
   // ── Stats ──────────────────────────────────────────────────────────────────
   studyHours  = signal(12);
   studyStreak = signal(8);
+
+  // ── Conceptual Map: joints (interruptores de expansión) ──────────────────
+  //
+  // joint1    → controla Branch L1 "Conceptos de Nube" + sus hijos
+  // joint2    → controla Branch L1 "Administración y Gobernanza"
+  // joint3    → controla Branch L1 "Arquitectura y Servicios"
+  // jointCost → controla el Nested L3 "Iniciativas" (hijo de Cost Management)
+  //
+  // joint1 arranca en true para mostrar el mapa con algo visible al cargar
+  joint1    = signal(true);
+  joint2    = signal(false);
+  joint3    = signal(false);
+  jointCost = signal(false);
 
   // ── Roadmap data ───────────────────────────────────────────────────────────
   modules = signal<RoadmapModule[]>([
@@ -111,6 +124,10 @@ export class Az900DashboardComponent {
   selectedModule = computed(() =>
     this.modules().find(m => m.id === this.selectedModuleId()) ?? this.modules()[2]
   );
+
+  toggleJoint(j: WritableSignal<boolean>): void {
+    j.update(v => !v);
+  }
 
   // ── Computed ───────────────────────────────────────────────────────────────
   overallProgress = computed(() => {
