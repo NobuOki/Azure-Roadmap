@@ -43,13 +43,11 @@
 
     <!-- Conceptualmap Card -->
 
-    <!-- ── Conceptual Map Card — Step 1 ─────────────────────────────────────── -->
-    <!-- Arquitectura: UN solo SVG con foreignObject para nodos HTML             -->
-    <!-- Los paths y nodos comparten el mismo sistema de coordenadas             -->
-    
+    <!-- ── Conceptual Map Card — Spine dinámica con computed() ─────────────── -->
+
     <section class="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4">
     
-      <!-- Header + controles de zoom -->
+      <!-- Header + controles -->
       <div class="mb-3 flex items-center justify-between">
         <h2 class="text-sm font-medium text-gray-900">Mapa Conceptual</h2>
         <div class="flex items-center gap-1.5">
@@ -61,8 +59,7 @@
           <div class="h-4 w-px bg-gray-200"></div>
           <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
                       bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
-                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomOut()" [disabled]="zoom() <= 0.3"
-            title="Alejar">
+                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomOut()" [disabled]="zoom() <= 0.3">
             <i class="ti ti-minus text-[13px]"></i>
           </button>
           <span class="min-w-[38px] text-center text-[11px] font-medium text-gray-500">
@@ -70,162 +67,330 @@
           </span>
           <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
                       bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
-                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomIn()" [disabled]="zoom() >= 2"
-            title="Acercar">
+                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomIn()" [disabled]="zoom() >= 2">
             <i class="ti ti-plus text-[13px]"></i>
           </button>
         </div>
       </div>
     
-      <!-- Canvas: altura fija + zoom/pan -->
+      <!-- Canvas -->
       <div #canvasRef class="relative h-[400px] overflow-hidden rounded-lg bg-slate-50 select-none"
         [class.cursor-grab]="!isDragging()" [class.cursor-grabbing]="isDragging()" (mousedown)="onMouseDown($event)"
         (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()" (mouseleave)="onMouseUp()" (wheel)="onWheel($event)">
     
-        <!-- Capa de transformación: zoom + pan -->
         <div class="absolute inset-0 origin-top-left" [style.transform]="mapTransform()">
     
-          <!-- ────────────────────────────────────────────────────────────────
-                  SVG ÚNICO: paths + joints + nodos (foreignObject)
-                  Sistema de coordenadas:
-                    Main Chip  → x=20,  y=20,  w=200, h=46  (bottom: y=66)
-                    Spine x    → x=35   (cerca del borde izquierdo del chip)
-                    Branch x   → x=65   (left edge de todos los branches)
-                    Joint cx   → x=81   (16px dentro del branch, alineado al centro)
-              ──────────────────────────────────────────────────────────────────── -->
-          <svg width="360" height="340" xmlns="http://www.w3.org/2000/svg">
+          <!--
+                SVG ÚNICO — ancho fijo, alto DINÁMICO
+                [attr.height]="svgHeight()" se recalcula cada vez que un joint cambia.
+                Todos los paths y posiciones se calculan con computed() en el .ts.
+              -->
+          <svg [attr.width]="svgWidth" [attr.height]="svgHeight()" xmlns="http://www.w3.org/2000/svg">
     
-            <!-- ── PASO 1: PATHS ─────────────────────────────────────────── -->
+            <!-- ════════════════════════════════════════════════════════════
+                    PASO 1: PATHS
+                    Regla: far primero, near después (en todos los niveles)
+                    Esto genera el efecto de color por sección sin gradiente.
+                ════════════════════════════════════════════════════════════ -->
+    
+            <!-- ── Pink: B3 (Administración y Gobernanza) ── -->
             <!--
-                  Orden de dibujo: B3 primero → B2 → B1 (último)
-                  Cada path empieza en el fondo del chip (y=66) y va hasta su branch.
-                  Como SVG pinta encima del anterior:
-                    B3 (pink)   dibuja y=66→y=262  (toda la altura)
-                    B2 (purple) dibuja y=66→y=185  (tapa el pink en la parte superior)
-                    B1 (blue)   dibuja y=66→y=108  (tapa el purple en la parte superior)
-                  Resultado: spine tricolor por secciones
+                  pathToB3: M35 66 → down → curve → B3 center_y
+                  Como B3 es el branch más lejano, su path cubre toda la altura.
+                  B2 y B1 se dibujarán encima, tapando el pink en la parte superior.
                 -->
+            <path [attr.d]="pathToB3()"
+              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
+            <!-- Vertical: B3 bottom → J3 center -->
+            <path [attr.d]="pathJB3()"
+              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
     
-            <!-- B3 → Administración y Gobernanza (pink, dibujado primero) -->
+            @if (joint3()) {
             <!--
-                  Sub-path 1: M35 66 L35 252  → línea vertical desde chip hasta cerca de B3
-                  Sub-path 2: M35 252 Q35 262 45 262  → curva Bézier 90° hacia la derecha
-                  Sub-path 3: M45 262 L65 262  → línea horizontal hasta el left edge del nodo
-                -->
-            <path d="M35 66 L35 252 M35 252 Q35 262 45 262 M45 262 L65 262"
-              style="fill:transparent; stroke:rgb(247,87,140); stroke-width:4; stroke-linecap:round;" />
+                    Sub-árbol de B3:
+                    Sub2 (far, dibujado primero) → Sub1 (near, dibujado después)
+                    Sub1 puede tener hijos → empuja Sub2 hacia abajo automáticamente
+                    porque yB3Sub2 depende de b3Sub1Bottom que depende de joint3Sub1
+                  -->
+            <path [attr.d]="pathToB3Sub2()"
+              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathToB3Sub1()"
+              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathJB3Sub1()"
+              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
     
-            <!-- B2 → Arquitectura y servicios (purple, tapa el pink en la parte superior) -->
-            <path d="M35 66 L35 175 M35 175 Q35 185 45 185 M45 185 L65 185"
-              style="fill:transparent; stroke:rgb(161,121,242); stroke-width:4; stroke-linecap:round;" />
+            @if (joint3Sub1()) {
+            <!-- L3 dotted: stroke-dasharray:0,5 con round caps = puntos -->
+            <path [attr.d]="pathToB3Sub1Nested()" style="fill:transparent;stroke:rgb(247,87,140);stroke-width:3;
+                                stroke-dasharray:0,5;stroke-linecap:round;" />
+            }
+            }
     
-            <!-- B1 → Conceptos de Nube (blue, dibujado último, queda encima) -->
-            <path d="M35 66 L35 98 M35 98 Q35 108 45 108 M45 108 L65 108"
-              style="fill:transparent; stroke:rgb(64,112,255); stroke-width:4; stroke-linecap:round;" />
-    
-            <!-- Paths de joints: líneas cortas desde el fondo de cada branch -->
-            <!-- B1 bottom: y=128 (y=88+height=40), joint center: y=148 -->
-            <path d="M81 128 L81 148"
-              style="fill:transparent; stroke:rgb(64,112,255); stroke-width:4; stroke-linecap:round;" />
-            <!-- B2 bottom: y=205 (y=165+40), joint center: y=225 -->
-            <path d="M81 205 L81 225"
-              style="fill:transparent; stroke:rgb(161,121,242); stroke-width:4; stroke-linecap:round;" />
-            <!-- B3 bottom: y=282 (y=242+40), joint center: y=302 -->
-            <path d="M81 282 L81 302"
-              style="fill:transparent; stroke:rgb(247,87,140); stroke-width:4; stroke-linecap:round;" />
-    
-            <!-- ── PASO 2: JOINTS ─────────────────────────────────────────── -->
+            <!-- ── Purple: B2 (Arquitectura y servicios) ── -->
             <!--
-                  Cada joint: 2 círculos concéntricos (outer + inner)
-                  + 1 círculo transparente encima para capturar clicks
-                  Estado: inner relleno = expandido / inner blanco = colapsado
+                  pathToB2: cubre hasta B2 center_y, tapa el pink en esa sección.
+                  B2 center_y es dynamic: depende de b1SubBottom (posición de B1 expandido).
                 -->
+            <path [attr.d]="pathToB2()"
+              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathJB2()"
+              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
     
-            <!-- Joint 1 — azul (debajo de Conceptos de Nube) -->
-            <circle cx="81" cy="148" r="10" fill="white" stroke="rgb(64,112,255)" stroke-width="3" />
-            <circle cx="81" cy="148" r="4" [attr.fill]="joint1() ? 'rgb(64,112,255)' : 'white'" />
-            <!-- Círculo transparente: área clickeable confiable -->
-            <circle cx="81" cy="148" r="12" fill="transparent" class="cursor-pointer" (click)="toggleJoint(joint1)" />
+            @if (joint2()) {
+            <path [attr.d]="pathToB2Sub()"
+              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathJB2Sub()"
+              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
     
-            <!-- Joint 2 — morado (debajo de Arquitectura y servicios) -->
-            <circle cx="81" cy="225" r="10" fill="white" stroke="rgb(161,121,242)" stroke-width="3" />
-            <circle cx="81" cy="225" r="4" [attr.fill]="joint2() ? 'rgb(161,121,242)' : 'white'" />
-            <circle cx="81" cy="225" r="12" fill="transparent" class="cursor-pointer" (click)="toggleJoint(joint2)" />
+            @if (joint2Sub()) {
+            <path [attr.d]="pathToB2Nested()" style="fill:transparent;stroke:rgb(161,121,242);stroke-width:3;
+                                stroke-dasharray:0,5;stroke-linecap:round;" />
+            }
+            }
     
-            <!-- Joint 3 — rosa (debajo de Administración y Gobernanza) -->
-            <circle cx="81" cy="302" r="10" fill="white" stroke="rgb(247,87,140)" stroke-width="3" />
-            <circle cx="81" cy="302" r="4" [attr.fill]="joint3() ? 'rgb(247,87,140)' : 'white'" />
-            <circle cx="81" cy="302" r="12" fill="transparent" class="cursor-pointer" (click)="toggleJoint(joint3)" />
-    
-            <!-- ── PASO 3: NODOS con foreignObject ───────────────────────── -->
+            <!-- ── Blue: B1 (Conceptos de Nube) ── -->
             <!--
-                  foreignObject permite HTML real dentro de SVG.
-                  x, y, width, height usan las mismas coordenadas que los paths.
-                  Esto garantiza alineación perfecta entre líneas y nodos.
-    
-                  IMPORTANTE:
-                  - El div hijo necesita xmlns="http://www.w3.org/1999/xhtml"
-                  - box-sizing: border-box para que padding no desborde
-                  - Usamos inline styles para máxima compatibilidad cross-browser
-                    dentro de foreignObject (Tailwind puede tener inconsistencias aquí)
+                  pathToB1: dibujado último → queda encima en la zona superior.
+                  Sub-árbol de B1: Cost (far) primero, AP (near) después.
+                  AP y Cost se auto-posicionan: si jointAP se abre, Cost baja.
                 -->
+            <path [attr.d]="pathToB1()"
+              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathJB1()"
+              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
     
-            <!-- Main Chip: x=20, y=20, w=200, h=46 -->
-            <!-- El spine x=35 está dentro del chip, cerca del borde izquierdo -->
+            @if (joint1()) {
+            <!-- Cost (far) primero, AP (near) después -->
+            <path [attr.d]="pathToCost()"
+              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathToAP()"
+              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathJAP()"
+              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
+            <path [attr.d]="pathJCost()"
+              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
+    
+            @if (jointAP()) {
+            <path [attr.d]="pathToAPNested()" style="fill:transparent;stroke:rgb(64,112,255);stroke-width:3;
+                                stroke-dasharray:0,5;stroke-linecap:round;" />
+            }
+            @if (jointCost()) {
+            <path [attr.d]="pathToIniciativas()" style="fill:transparent;stroke:rgb(64,112,255);stroke-width:3;
+                                stroke-dasharray:0,5;stroke-linecap:round;" />
+            }
+            }
+    
+            <!-- ════════════════════════════════════════════════════════════
+                    PASO 2: JOINTS
+                    cx fijo por nivel, cy dinámico con [attr.cy]
+                    Patrón: outer + inner + transparent (área de click)
+                ════════════════════════════════════════════════════════════ -->
+    
+            <!-- ── L1 Joints (siempre visibles) ── -->
+            <!-- J1 Blue -->
+            <circle cx="81" [attr.cy]="cyJ1()" r="10" fill="white" stroke="rgb(64,112,255)" stroke-width="3" />
+            <circle cx="81" [attr.cy]="cyJ1()" r="4" [attr.fill]="joint1() ? 'rgb(64,112,255)' : 'white'" />
+            <circle cx="81" [attr.cy]="cyJ1()" r="12" fill="transparent" class="cursor-pointer"
+              (click)="toggleJoint(joint1)" />
+    
+            <!-- J2 Purple -->
+            <circle cx="81" [attr.cy]="cyJ2()" r="10" fill="white" stroke="rgb(161,121,242)" stroke-width="3" />
+            <circle cx="81" [attr.cy]="cyJ2()" r="4" [attr.fill]="joint2() ? 'rgb(161,121,242)' : 'white'" />
+            <circle cx="81" [attr.cy]="cyJ2()" r="12" fill="transparent" class="cursor-pointer"
+              (click)="toggleJoint(joint2)" />
+    
+            <!-- J3 Pink -->
+            <circle cx="81" [attr.cy]="cyJ3()" r="10" fill="white" stroke="rgb(247,87,140)" stroke-width="3" />
+            <circle cx="81" [attr.cy]="cyJ3()" r="4" [attr.fill]="joint3() ? 'rgb(247,87,140)' : 'white'" />
+            <circle cx="81" [attr.cy]="cyJ3()" r="12" fill="transparent" class="cursor-pointer"
+              (click)="toggleJoint(joint3)" />
+    
+            <!-- ── L2 Joints (aparecen con su branch expandido) ── -->
+            @if (joint1()) {
+            <circle cx="119" [attr.cy]="cyJAP()" r="8" fill="white" stroke="rgb(64,112,255)" stroke-width="2.5" />
+            <circle cx="119" [attr.cy]="cyJAP()" r="3" [attr.fill]="jointAP()   ? 'rgb(64,112,255)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyJAP()" r="10" fill="transparent" class="cursor-pointer"
+              (click)="toggleJoint(jointAP)" />
+    
+            <circle cx="119" [attr.cy]="cyCostJ()" r="8" fill="white" stroke="rgb(64,112,255)" stroke-width="2.5" />
+            <circle cx="119" [attr.cy]="cyCostJ()" r="3" [attr.fill]="jointCost() ? 'rgb(64,112,255)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyCostJ()" r="10" fill="transparent" class="cursor-pointer"
+              (click)="toggleJoint(jointCost)" />
+            }
+    
+            @if (joint2()) {
+            <circle cx="119" [attr.cy]="cyJ2Sub()" r="8" fill="white" stroke="rgb(161,121,242)" stroke-width="2.5" />
+            <circle cx="119" [attr.cy]="cyJ2Sub()" r="3" [attr.fill]="joint2Sub() ? 'rgb(161,121,242)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyJ2Sub()" r="10" fill="transparent" class="cursor-pointer"
+              (click)="toggleJoint(joint2Sub)" />
+            }
+    
+            @if (joint3()) {
+            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="8" fill="white" stroke="rgb(247,87,140)" stroke-width="2.5" />
+            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="3" [attr.fill]="joint3Sub1() ? 'rgb(247,87,140)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="10" fill="transparent" class="cursor-pointer"
+              (click)="toggleJoint(joint3Sub1)" />
+            }
+    
+            <!-- ════════════════════════════════════════════════════════════
+                    PASO 3: NODOS con foreignObject
+                    [attr.y] dinámico — se recalcula automáticamente con computed()
+                    x y width son fijos por nivel
+                ════════════════════════════════════════════════════════════ -->
+    
+            <!-- ── Main Chip ── -->
             <foreignObject x="20" y="20" width="200" height="46">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
-                              justify-content:center; border-radius:18px;
-                              border:3px solid #00bcff; background:white;
-                              box-sizing:border-box; font-family:system-ui,sans-serif;">
-                <span style="font-size:15px; font-weight:bold; color:#3d474d;
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                              justify-content:center;border-radius:18px;
+                              border:3px solid #00bcff;background:white;
+                              box-sizing:border-box;font-family:system-ui,sans-serif;">
+                <span style="font-size:15px;font-weight:bold;color:#3d474d;
                                 letter-spacing:-0.02em;">AZURE AZ-900</span>
               </div>
             </foreignObject>
     
-            <!-- Branch L1: Conceptos de Nube -->
-            <!-- x=65 coincide con donde terminan los paths (L65 108)           -->
-            <!-- y=88: center_y = 88+20 = 108 = punto final del path            -->
-            <foreignObject x="65" y="88" width="165" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
-                              padding:0 14px; border-radius:13px;
-                              background:rgb(64,112,255); box-sizing:border-box;
-                              font-family:system-ui,sans-serif; cursor:pointer;">
-                <span style="font-size:13px; color:white; white-space:nowrap;">
-                  Conceptos de Nube
-                </span>
+            <!-- ── L1 Branches (siempre visibles, y dinámico) ── -->
+    
+            <!-- B1: Conceptos de Nube -->
+            <foreignObject x="65" [attr.y]="yB1()" width="165" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                              padding:0 14px;border-radius:13px;background:rgb(64,112,255);
+                              box-sizing:border-box;font-family:system-ui,sans-serif;">
+                <span style="font-size:13px;color:white;white-space:nowrap;">Conceptos de Nube</span>
               </div>
             </foreignObject>
     
-            <!-- Branch L1: Arquitectura y servicios -->
-            <!-- center_y = 165+20 = 185 = punto final del path -->
-            <foreignObject x="65" y="165" width="195" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
-                              padding:0 14px; border-radius:13px;
-                              background:rgb(161,121,242); box-sizing:border-box;
-                              font-family:system-ui,sans-serif; cursor:pointer;">
-                <span style="font-size:13px; color:white; white-space:nowrap;">
-                  Arquitectura y servicios
-                </span>
+            <!-- B2: Arquitectura y servicios -->
+            <!-- yB2 se recalcula cuando B1 se expande/colapsa -->
+            <foreignObject x="65" [attr.y]="yB2()" width="195" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                              padding:0 14px;border-radius:13px;background:rgb(161,121,242);
+                              box-sizing:border-box;font-family:system-ui,sans-serif;">
+                <span style="font-size:13px;color:white;white-space:nowrap;">Arquitectura y servicios</span>
               </div>
             </foreignObject>
     
-            <!-- Branch L1: Administración y Gobernanza -->
-            <!-- center_y = 242+20 = 262 = punto final del path -->
-            <foreignObject x="65" y="242" width="250" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
-                              padding:0 14px; border-radius:13px;
-                              background:rgb(247,87,140); box-sizing:border-box;
-                              font-family:system-ui,sans-serif; cursor:pointer;">
-                <span style="font-size:13px; color:white; white-space:nowrap;">
-                  Administración y Gobernanza
-                </span>
+            <!-- B3: Administración y Gobernanza -->
+            <!-- yB3 se recalcula cuando B1 o B2 se expanden/colapsan -->
+            <foreignObject x="65" [attr.y]="yB3()" width="250" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                              padding:0 14px;border-radius:13px;background:rgb(247,87,140);
+                              box-sizing:border-box;font-family:system-ui,sans-serif;">
+                <span style="font-size:13px;color:white;white-space:nowrap;">Administración y Gobernanza</span>
               </div>
             </foreignObject>
+    
+            <!-- ── L2 Sub-branches de B1 ── -->
+            @if (joint1()) {
+            <!-- Azure Policy -->
+            <foreignObject x="101" [attr.y]="yAP()" width="130" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                padding:0 12px;border-radius:13px;background:white;
+                                border:4px solid rgb(64,112,255);box-sizing:border-box;
+                                font-family:system-ui,sans-serif;">
+                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Azure Policy</span>
+              </div>
+            </foreignObject>
+    
+            <!-- Cost Management -->
+            <!-- yCost depende de si jointAP está abierto (AP puede tener hijos) -->
+            <foreignObject x="101" [attr.y]="yCost()" width="155" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                padding:0 12px;border-radius:13px;background:white;
+                                border:4px solid rgb(64,112,255);box-sizing:border-box;
+                                font-family:system-ui,sans-serif;">
+                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Cost Management</span>
+              </div>
+            </foreignObject>
+    
+            <!-- L3: Definiciones (hija de Azure Policy) -->
+            @if (jointAP()) {
+            <foreignObject x="139" [attr.y]="yAPNested()" width="120" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                  padding:0 12px;border-radius:13px;background:white;
+                                  border:2px dotted rgb(64,112,255);box-sizing:border-box;
+                                  font-family:system-ui,sans-serif;">
+                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Definiciones</span>
+              </div>
+            </foreignObject>
+            }
+    
+            <!-- L3: Iniciativas (hija de Cost Management) -->
+            @if (jointCost()) {
+            <!-- yIniciativas depende de yCost que depende de jointAP -->
+            <foreignObject x="139" [attr.y]="yIniciativas()" width="110" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                  padding:0 12px;border-radius:13px;background:white;
+                                  border:2px dotted rgb(64,112,255);box-sizing:border-box;
+                                  font-family:system-ui,sans-serif;">
+                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Iniciativas</span>
+              </div>
+            </foreignObject>
+            }
+            }
+    
+            <!-- ── L2 Sub-branch de B2 ── -->
+            @if (joint2()) {
+            <foreignObject x="101" [attr.y]="yB2Sub()" width="140" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                padding:0 12px;border-radius:13px;background:white;
+                                border:4px solid rgb(161,121,242);box-sizing:border-box;
+                                font-family:system-ui,sans-serif;">
+                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Cómputo y Redes</span>
+              </div>
+            </foreignObject>
+    
+            @if (joint2Sub()) {
+            <foreignObject x="139" [attr.y]="yB2Nested()" width="110" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                  padding:0 12px;border-radius:13px;background:white;
+                                  border:2px dotted rgb(161,121,242);box-sizing:border-box;
+                                  font-family:system-ui,sans-serif;">
+                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Azure VMs</span>
+              </div>
+            </foreignObject>
+            }
+            }
+    
+            <!-- ── L2 Sub-branches de B3 ── -->
+            @if (joint3()) {
+            <!-- B3Sub1: RBAC (near) -->
+            <foreignObject x="101" [attr.y]="yB3Sub1()" width="120" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                padding:0 12px;border-radius:13px;background:white;
+                                border:4px solid rgb(247,87,140);box-sizing:border-box;
+                                font-family:system-ui,sans-serif;">
+                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">RBAC</span>
+              </div>
+            </foreignObject>
+    
+            <!-- B3Sub2: Cumplimiento (far) -->
+            <!-- yB3Sub2 depende de b3Sub1Bottom (si joint3Sub1 abierto, baja) -->
+            <foreignObject x="101" [attr.y]="yB3Sub2()" width="130" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                padding:0 12px;border-radius:13px;background:white;
+                                border:4px solid rgb(247,87,140);box-sizing:border-box;
+                                font-family:system-ui,sans-serif;">
+                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Cumplimiento</span>
+              </div>
+            </foreignObject>
+    
+            @if (joint3Sub1()) {
+            <!-- yB3Sub1Nested depende de cyJ3Sub1 que depende de yB3Sub1 -->
+            <foreignObject x="139" [attr.y]="yB3Sub1Nested()" width="130" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
+                                  padding:0 12px;border-radius:13px;background:white;
+                                  border:2px dotted rgb(247,87,140);box-sizing:border-box;
+                                  font-family:system-ui,sans-serif;">
+                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Roles y Permisos</span>
+              </div>
+            </foreignObject>
+            }
+            }
     
           </svg>
     
         </div>
-    
       </div>
     
       <p class="mt-2 text-[10px] text-gray-300">
@@ -233,6 +398,8 @@
       </p>
     
     </section>
+
+    
     
 
     <!-- Sidebar -->
