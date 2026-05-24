@@ -189,45 +189,46 @@
             <!-- ── L1 Joints (siempre visibles) ── -->
             <!-- J1 Blue -->
             <circle cx="81" [attr.cy]="cyJ1()" r="10" fill="white" stroke="rgb(64,112,255)" stroke-width="3" />
-            <circle cx="81" [attr.cy]="cyJ1()" r="4" [attr.fill]="joint1() ? 'rgb(64,112,255)' : 'white'" />
+            <!--<circle cx="81" [attr.cy]="cyJ1()" r="4" [attr.fill]="joint1() ? 'rgb(64,112,255)' : 'white'" />-->
+            <circle cx="81" [attr.cy]="cyJ1()" r="4" [attr.fill]="joint1() ? 'white' : 'rgb(64,112,255)'" />
             <circle cx="81" [attr.cy]="cyJ1()" r="12" fill="transparent" class="cursor-pointer"
               (click)="toggleJoint(joint1)" />
     
             <!-- J2 Purple -->
             <circle cx="81" [attr.cy]="cyJ2()" r="10" fill="white" stroke="rgb(161,121,242)" stroke-width="3" />
-            <circle cx="81" [attr.cy]="cyJ2()" r="4" [attr.fill]="joint2() ? 'rgb(161,121,242)' : 'white'" />
+            <circle cx="81" [attr.cy]="cyJ2()" r="4" [attr.fill]="joint2() ? 'white': 'rgb(161,121,242)' " />
             <circle cx="81" [attr.cy]="cyJ2()" r="12" fill="transparent" class="cursor-pointer"
               (click)="toggleJoint(joint2)" />
     
             <!-- J3 Pink -->
             <circle cx="81" [attr.cy]="cyJ3()" r="10" fill="white" stroke="rgb(247,87,140)" stroke-width="3" />
-            <circle cx="81" [attr.cy]="cyJ3()" r="4" [attr.fill]="joint3() ? 'rgb(247,87,140)' : 'white'" />
+            <circle cx="81" [attr.cy]="cyJ3()" r="4" [attr.fill]="joint3() ?  'white' : 'rgb(247,87,140)' " />
             <circle cx="81" [attr.cy]="cyJ3()" r="12" fill="transparent" class="cursor-pointer"
               (click)="toggleJoint(joint3)" />
     
             <!-- ── L2 Joints (aparecen con su branch expandido) ── -->
             @if (joint1()) {
             <circle cx="119" [attr.cy]="cyJAP()" r="8" fill="white" stroke="rgb(64,112,255)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyJAP()" r="3" [attr.fill]="jointAP()   ? 'rgb(64,112,255)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyJAP()" r="3" [attr.fill]="jointAP() ? 'white' : 'rgb(64,112,255)' " />
             <circle cx="119" [attr.cy]="cyJAP()" r="10" fill="transparent" class="cursor-pointer"
               (click)="toggleJoint(jointAP)" />
     
             <circle cx="119" [attr.cy]="cyCostJ()" r="8" fill="white" stroke="rgb(64,112,255)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyCostJ()" r="3" [attr.fill]="jointCost() ? 'rgb(64,112,255)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyCostJ()" r="3" [attr.fill]="jointCost() ? 'white' : 'rgb(64,112,255)' " />
             <circle cx="119" [attr.cy]="cyCostJ()" r="10" fill="transparent" class="cursor-pointer"
               (click)="toggleJoint(jointCost)" />
             }
     
             @if (joint2()) {
             <circle cx="119" [attr.cy]="cyJ2Sub()" r="8" fill="white" stroke="rgb(161,121,242)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyJ2Sub()" r="3" [attr.fill]="joint2Sub() ? 'rgb(161,121,242)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyJ2Sub()" r="3" [attr.fill]="joint2Sub() ? 'white' : 'rgb(161,121,242)'" />
             <circle cx="119" [attr.cy]="cyJ2Sub()" r="10" fill="transparent" class="cursor-pointer"
               (click)="toggleJoint(joint2Sub)" />
             }
     
             @if (joint3()) {
             <circle cx="119" [attr.cy]="cyJ3Sub1()" r="8" fill="white" stroke="rgb(247,87,140)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="3" [attr.fill]="joint3Sub1() ? 'rgb(247,87,140)' : 'white'" />
+            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="3" [attr.fill]="joint3Sub1() ? 'white' : 'rgb(247,87,140)'" />
             <circle cx="119" [attr.cy]="cyJ3Sub1()" r="10" fill="transparent" class="cursor-pointer"
               (click)="toggleJoint(joint3Sub1)" />
             }
