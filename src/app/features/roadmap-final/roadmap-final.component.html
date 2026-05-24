@@ -42,196 +42,198 @@
   <section class="grid grid-cols-[1fr_220px] gap-2.5 items-start">
 
     <!-- Conceptualmap Card -->
-    <!-- ── Conceptual Map Card ──────────────────────────────────────────────── -->
+
+    <!-- ── Conceptual Map Card — Step 1 ─────────────────────────────────────── -->
+    <!-- Arquitectura: UN solo SVG con foreignObject para nodos HTML             -->
+    <!-- Los paths y nodos comparten el mismo sistema de coordenadas             -->
+    
     <section class="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4">
     
-      <!-- Header del card -->
+      <!-- Header + controles de zoom -->
       <div class="mb-3 flex items-center justify-between">
         <h2 class="text-sm font-medium text-gray-900">Mapa Conceptual</h2>
-    
-        <!-- Controles de zoom -->
         <div class="flex items-center gap-1.5">
-    
-          <!-- Botón reset -->
           <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
                       bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700" (click)="resetCanvas()"
             title="Restablecer vista">
             <i class="ti ti-home text-[13px]"></i>
           </button>
-    
           <div class="h-4 w-px bg-gray-200"></div>
-    
-          <!-- Botón zoom out -->
           <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
                       bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
                       disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomOut()" [disabled]="zoom() <= 0.3"
             title="Alejar">
             <i class="ti ti-minus text-[13px]"></i>
           </button>
-    
-          <!-- Indicador de zoom actual -->
           <span class="min-w-[38px] text-center text-[11px] font-medium text-gray-500">
             {{ (zoom() * 100).toFixed(0) }}%
           </span>
-    
-          <!-- Botón zoom in -->
           <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
                       bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
                       disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomIn()" [disabled]="zoom() >= 2"
             title="Acercar">
             <i class="ti ti-plus text-[13px]"></i>
           </button>
-    
         </div>
       </div>
     
-      <!-- Canvas: altura fija + overflow hidden -->
-      <!-- El pan y zoom se aplican al div interno, no al canvas -->
-      <div #canvasRef class="relative h-[400px] overflow-hidden rounded-lg bg-slate-50
-                  select-none" [class.cursor-grab]="!isDragging()" [class.cursor-grabbing]="isDragging()"
-        (mousedown)="onMouseDown($event)" (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()"
-        (mouseleave)="onMouseUp()" (wheel)="onWheel($event)">
+      <!-- Canvas: altura fija + zoom/pan -->
+      <div #canvasRef class="relative h-[400px] overflow-hidden rounded-lg bg-slate-50 select-none"
+        [class.cursor-grab]="!isDragging()" [class.cursor-grabbing]="isDragging()" (mousedown)="onMouseDown($event)"
+        (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()" (mouseleave)="onMouseUp()" (wheel)="onWheel($event)">
     
-        <!-- Mapa interno: aquí se aplica transform de zoom + pan -->
+        <!-- Capa de transformación: zoom + pan -->
         <div class="absolute inset-0 origin-top-left" [style.transform]="mapTransform()">
     
-          <!-- ── CAPA 1: SVG ────────────────────────────────────────────────── -->
-          <svg class="absolute inset-0 h-full w-full" viewBox="0 0 480 580" fill="none">
+          <!-- ────────────────────────────────────────────────────────────────
+                  SVG ÚNICO: paths + joints + nodos (foreignObject)
+                  Sistema de coordenadas:
+                    Main Chip  → x=20,  y=20,  w=200, h=46  (bottom: y=66)
+                    Spine x    → x=35   (cerca del borde izquierdo del chip)
+                    Branch x   → x=65   (left edge de todos los branches)
+                    Joint cx   → x=81   (16px dentro del branch, alineado al centro)
+              ──────────────────────────────────────────────────────────────────── -->
+          <svg width="360" height="340" xmlns="http://www.w3.org/2000/svg">
     
-            <defs>
-              <linearGradient id="spineGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#3b71fe" />
-                <stop offset="50%" stop-color="#a676f2" />
-                <stop offset="100%" stop-color="#f25a8a" />
-              </linearGradient>
-            </defs>
+            <!-- ── PASO 1: PATHS ─────────────────────────────────────────── -->
+            <!--
+                  Orden de dibujo: B3 primero → B2 → B1 (último)
+                  Cada path empieza en el fondo del chip (y=66) y va hasta su branch.
+                  Como SVG pinta encima del anterior:
+                    B3 (pink)   dibuja y=66→y=262  (toda la altura)
+                    B2 (purple) dibuja y=66→y=185  (tapa el pink en la parte superior)
+                    B1 (blue)   dibuja y=66→y=108  (tapa el purple en la parte superior)
+                  Resultado: spine tricolor por secciones
+                -->
     
-            <!-- Central Spine -->
-            <path d="M55 62 L55 515" stroke="url(#spineGrad)" stroke-width="6" stroke-linecap="round" />
+            <!-- B3 → Administración y Gobernanza (pink, dibujado primero) -->
+            <!--
+                  Sub-path 1: M35 66 L35 252  → línea vertical desde chip hasta cerca de B3
+                  Sub-path 2: M35 252 Q35 262 45 262  → curva Bézier 90° hacia la derecha
+                  Sub-path 3: M45 262 L65 262  → línea horizontal hasta el left edge del nodo
+                -->
+            <path d="M35 66 L35 252 M35 252 Q35 262 45 262 M45 262 L65 262"
+              style="fill:transparent; stroke:rgb(247,87,140); stroke-width:4; stroke-linecap:round;" />
     
-            <!-- Terminal: doble anillo -->
-            <circle cx="55" cy="515" r="9" fill="white" stroke="#f25a8a" stroke-width="3" />
-            <circle cx="55" cy="515" r="4" fill="#f25a8a" />
+            <!-- B2 → Arquitectura y servicios (purple, tapa el pink en la parte superior) -->
+            <path d="M35 66 L35 175 M35 175 Q35 185 45 185 M45 185 L65 185"
+              style="fill:transparent; stroke:rgb(161,121,242); stroke-width:4; stroke-linecap:round;" />
     
-            <!-- ── Joint 1 — Conceptos de Nube ───────────────────────────── -->
-            <circle cx="55" cy="128" r="8" fill="white" stroke="#3b71fe" stroke-width="3" class="cursor-pointer"
-              (click)="toggleJoint(joint1)" />
-            <circle cx="55" cy="128" r="4" [attr.fill]="joint1() ? '#3b71fe' : 'white'" class="cursor-pointer"
-              (click)="toggleJoint(joint1)" />
+            <!-- B1 → Conceptos de Nube (blue, dibujado último, queda encima) -->
+            <path d="M35 66 L35 98 M35 98 Q35 108 45 108 M45 108 L65 108"
+              style="fill:transparent; stroke:rgb(64,112,255); stroke-width:4; stroke-linecap:round;" />
     
-            @if (joint1()) {
-            <path d="M55 128 Q55 145 90 145" stroke="#3b71fe" stroke-width="5" stroke-linecap="round" />
-            <path d="M110 163 L110 292" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
-            <path d="M110 212 L145 212" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
-            <path d="M110 282 L145 282" stroke="#3b71fe" stroke-width="4" stroke-linecap="round" />
+            <!-- Paths de joints: líneas cortas desde el fondo de cada branch -->
+            <!-- B1 bottom: y=128 (y=88+height=40), joint center: y=148 -->
+            <path d="M81 128 L81 148"
+              style="fill:transparent; stroke:rgb(64,112,255); stroke-width:4; stroke-linecap:round;" />
+            <!-- B2 bottom: y=205 (y=165+40), joint center: y=225 -->
+            <path d="M81 205 L81 225"
+              style="fill:transparent; stroke:rgb(161,121,242); stroke-width:4; stroke-linecap:round;" />
+            <!-- B3 bottom: y=282 (y=242+40), joint center: y=302 -->
+            <path d="M81 282 L81 302"
+              style="fill:transparent; stroke:rgb(247,87,140); stroke-width:4; stroke-linecap:round;" />
     
-            @if (jointCost()) {
-            <path d="M220 300 L220 348 Q220 355 255 355" stroke="#3b71fe" stroke-width="3" stroke-dasharray="6 4"
-              stroke-linecap="round" />
-            }
-            }
+            <!-- ── PASO 2: JOINTS ─────────────────────────────────────────── -->
+            <!--
+                  Cada joint: 2 círculos concéntricos (outer + inner)
+                  + 1 círculo transparente encima para capturar clicks
+                  Estado: inner relleno = expandido / inner blanco = colapsado
+                -->
     
-            <!-- ── Joint 2 — Administración y Gobernanza ─────────────────── -->
-            <circle cx="55" cy="372" r="8" fill="white" stroke="#a676f2" stroke-width="3" class="cursor-pointer"
-              (click)="toggleJoint(joint2)" />
-            <circle cx="55" cy="372" r="4" [attr.fill]="joint2() ? '#a676f2' : 'white'" class="cursor-pointer"
-              (click)="toggleJoint(joint2)" />
+            <!-- Joint 1 — azul (debajo de Conceptos de Nube) -->
+            <circle cx="81" cy="148" r="10" fill="white" stroke="rgb(64,112,255)" stroke-width="3" />
+            <circle cx="81" cy="148" r="4" [attr.fill]="joint1() ? 'rgb(64,112,255)' : 'white'" />
+            <!-- Círculo transparente: área clickeable confiable -->
+            <circle cx="81" cy="148" r="12" fill="transparent" class="cursor-pointer" (click)="toggleJoint(joint1)" />
     
-            @if (joint2()) {
-            <path d="M55 372 Q55 390 90 390" stroke="#a676f2" stroke-width="5" stroke-linecap="round" />
-            }
+            <!-- Joint 2 — morado (debajo de Arquitectura y servicios) -->
+            <circle cx="81" cy="225" r="10" fill="white" stroke="rgb(161,121,242)" stroke-width="3" />
+            <circle cx="81" cy="225" r="4" [attr.fill]="joint2() ? 'rgb(161,121,242)' : 'white'" />
+            <circle cx="81" cy="225" r="12" fill="transparent" class="cursor-pointer" (click)="toggleJoint(joint2)" />
     
-            <!-- ── Joint 3 — Arquitectura y Servicios ────────────────────── -->
-            <circle cx="55" cy="462" r="8" fill="white" stroke="#f25a8a" stroke-width="3" class="cursor-pointer"
-              (click)="toggleJoint(joint3)" />
-            <circle cx="55" cy="462" r="4" [attr.fill]="joint3() ? '#f25a8a' : 'white'" class="cursor-pointer"
-              (click)="toggleJoint(joint3)" />
+            <!-- Joint 3 — rosa (debajo de Administración y Gobernanza) -->
+            <circle cx="81" cy="302" r="10" fill="white" stroke="rgb(247,87,140)" stroke-width="3" />
+            <circle cx="81" cy="302" r="4" [attr.fill]="joint3() ? 'rgb(247,87,140)' : 'white'" />
+            <circle cx="81" cy="302" r="12" fill="transparent" class="cursor-pointer" (click)="toggleJoint(joint3)" />
     
-            @if (joint3()) {
-            <path d="M55 462 Q55 480 90 480" stroke="#f25a8a" stroke-width="5" stroke-linecap="round" />
-            }
+            <!-- ── PASO 3: NODOS con foreignObject ───────────────────────── -->
+            <!--
+                  foreignObject permite HTML real dentro de SVG.
+                  x, y, width, height usan las mismas coordenadas que los paths.
+                  Esto garantiza alineación perfecta entre líneas y nodos.
+    
+                  IMPORTANTE:
+                  - El div hijo necesita xmlns="http://www.w3.org/1999/xhtml"
+                  - box-sizing: border-box para que padding no desborde
+                  - Usamos inline styles para máxima compatibilidad cross-browser
+                    dentro de foreignObject (Tailwind puede tener inconsistencias aquí)
+                -->
+    
+            <!-- Main Chip: x=20, y=20, w=200, h=46 -->
+            <!-- El spine x=35 está dentro del chip, cerca del borde izquierdo -->
+            <foreignObject x="20" y="20" width="200" height="46">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
+                              justify-content:center; border-radius:18px;
+                              border:3px solid #00bcff; background:white;
+                              box-sizing:border-box; font-family:system-ui,sans-serif;">
+                <span style="font-size:15px; font-weight:bold; color:#3d474d;
+                                letter-spacing:-0.02em;">AZURE AZ-900</span>
+              </div>
+            </foreignObject>
+    
+            <!-- Branch L1: Conceptos de Nube -->
+            <!-- x=65 coincide con donde terminan los paths (L65 108)           -->
+            <!-- y=88: center_y = 88+20 = 108 = punto final del path            -->
+            <foreignObject x="65" y="88" width="165" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
+                              padding:0 14px; border-radius:13px;
+                              background:rgb(64,112,255); box-sizing:border-box;
+                              font-family:system-ui,sans-serif; cursor:pointer;">
+                <span style="font-size:13px; color:white; white-space:nowrap;">
+                  Conceptos de Nube
+                </span>
+              </div>
+            </foreignObject>
+    
+            <!-- Branch L1: Arquitectura y servicios -->
+            <!-- center_y = 165+20 = 185 = punto final del path -->
+            <foreignObject x="65" y="165" width="195" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
+                              padding:0 14px; border-radius:13px;
+                              background:rgb(161,121,242); box-sizing:border-box;
+                              font-family:system-ui,sans-serif; cursor:pointer;">
+                <span style="font-size:13px; color:white; white-space:nowrap;">
+                  Arquitectura y servicios
+                </span>
+              </div>
+            </foreignObject>
+    
+            <!-- Branch L1: Administración y Gobernanza -->
+            <!-- center_y = 242+20 = 262 = punto final del path -->
+            <foreignObject x="65" y="242" width="250" height="40">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%; height:100%; display:flex; align-items:center;
+                              padding:0 14px; border-radius:13px;
+                              background:rgb(247,87,140); box-sizing:border-box;
+                              font-family:system-ui,sans-serif; cursor:pointer;">
+                <span style="font-size:13px; color:white; white-space:nowrap;">
+                  Administración y Gobernanza
+                </span>
+              </div>
+            </foreignObject>
     
           </svg>
     
-          <!-- ── CAPA 2: Nodos HTML ─────────────────────────────────────────── -->
+        </div>
     
-          <!-- Main Chip -->
-          <div class="absolute left-[10px] top-[15px]">
-            <div class="rounded-2xl border-[3px] border-[#00bcff] bg-white px-4 py-2 shadow-sm
-                            transition duration-200 hover:shadow-[0_0_14px_rgba(0,188,255,0.35)]">
-              <span class="text-sm font-bold tracking-tight text-slate-700">AZURE AZ-900</span>
-            </div>
-          </div>
+      </div>
     
-          @if (joint1()) {
-            <!-- Branch L1: Conceptos de Nube -->
-            <div class="absolute left-[90px] top-[127px]">
-              <button class="rounded-xl bg-[#3b71fe] px-4 py-2 text-white shadow-md
-                                      transition duration-200 hover:scale-105 hover:brightness-110">
-                <span class="text-sm font-semibold">Conceptos de Nube</span>
-              </button>
-            </div>
-            
-            <!-- Sub-branch L2: Azure Policy -->
-            <div class="absolute left-[145px] top-[196px]">
-              <div class="rounded-xl border-[3px] border-[#3b71fe] bg-white px-3 py-1.5
-                                          shadow-sm transition duration-200 hover:scale-105">
-                <span class="text-sm font-medium text-slate-700">Azure Policy</span>
-              </div>
-            </div>
-            
-            <!-- Sub-branch L2: Cost Management -->
-            <div class="absolute left-[145px] top-[266px]">
-              <button class="flex items-center gap-2 rounded-xl border-[3px] border-[#3b71fe]
-                                      bg-white px-3 py-1.5 shadow-sm transition duration-200 hover:scale-105"
-                (click)="toggleJoint(jointCost)">
-                <span class="text-sm font-medium text-slate-700">Cost Management</span>
-                <span class="text-[10px] text-[#3b71fe] transition duration-300" [class.rotate-180]="jointCost()">▼</span>
-              </button>
-            </div>
-            
-            @if (jointCost()) {
-            <!-- Nested L3: Iniciativas -->
-            <div class="absolute left-[255px] top-[336px]">
-              <div class="rounded-xl border-2 border-dashed border-[#3b71fe] bg-white
-                                            px-3 py-1.5 transition duration-200 hover:scale-105">
-                <span class="text-sm text-gray-400">Iniciativas</span>
-              </div>
-            </div>
-            }
-          }
-    
-          @if (joint2()) {
-            <!-- Branch L1: Administración y Gobernanza -->
-            <div class="absolute left-[90px] top-[371px]">
-              <button class="rounded-xl bg-[#a676f2] px-4 py-2 text-white shadow-md
-                            transition duration-200 hover:scale-105 hover:brightness-110">
-                <span class="text-sm font-semibold whitespace-nowrap">
-                  Administración y Gobernanza
-                </span>
-              </button>
-            </div>
-          }
-    
-          @if (joint3()) {
-            <!-- Branch L1: Arquitectura y Servicios -->
-            <div class="absolute left-[90px] top-[461px]">
-              <button class="rounded-xl bg-[#f25a8a] px-4 py-2 text-white shadow-md
-                            transition duration-200 hover:scale-105 hover:brightness-110">
-                <span class="text-sm font-semibold">Arquitectura y Servicios</span>
-              </button>
-            </div>
-          }
-    
-        </div><!-- /map-inner -->
-      </div><!-- /canvas -->
-    
-      <!-- Hint de uso -->
       <p class="mt-2 text-[10px] text-gray-300">
         Arrastra para mover · Ctrl+scroll para zoom
       </p>
     
     </section>
+    
 
     <!-- Sidebar -->
     <aside class="flex flex-col gap-2.5" aria-label="Detalle del módulo">
