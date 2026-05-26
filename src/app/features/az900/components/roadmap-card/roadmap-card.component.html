@@ -1,0 +1,94 @@
+<!-- roadmap-card.component.html -->
+<div class="bg-white border border-gray-200 rounded-xl p-4">
+
+  <p class="text-[10px] uppercase tracking-[0.14em] text-gray-400 mb-3.5">
+    Roadmap — ramas del tema
+  </p>
+
+  <ul class="flex flex-col gap-2" role="list">
+
+    @for (branch of branches(); track branch.id; let i = $index) {
+
+      <li
+        [ngClass]="{
+          'bg-teal-50  border-teal-200':  getBranchStatus(branch.id) === 'completed',
+          'bg-blue-50  border-blue-200':  getBranchStatus(branch.id) === 'in-progress',
+          'bg-gray-100 border-gray-200 opacity-60': getBranchStatus(branch.id) === 'locked',
+          'ring-2 ring-blue-600': selectedBranchId() === branch.id,
+          'cursor-pointer hover:-translate-y-px hover:shadow-md': getBranchStatus(branch.id) !== 'locked',
+          'cursor-default': getBranchStatus(branch.id) === 'locked'
+        }"
+        class="rounded-lg px-3.5 py-3 flex items-center gap-3 border
+               transition-all duration-200 outline-none
+               focus-visible:ring-2 focus-visible:ring-blue-600"
+        (click)="onSelect(branch.id)"
+        role="button"
+        [tabindex]="getBranchStatus(branch.id) !== 'locked' ? 0 : -1"
+        (keydown.enter)="onSelect(branch.id)"
+        (keydown.space)="onSelect(branch.id)">
+
+        <!-- Badge numérico -->
+        <div
+          [ngClass]="{
+            'bg-teal-700 text-teal-50':  getBranchStatus(branch.id) === 'completed',
+            'bg-blue-700 text-blue-50':  getBranchStatus(branch.id) === 'in-progress',
+            'bg-gray-300 text-gray-500': getBranchStatus(branch.id) === 'locked'
+          }"
+          class="w-7 h-7 rounded-full flex items-center justify-center
+                 text-xs font-medium shrink-0">
+          {{ i + 1 }}
+        </div>
+
+        <!-- Cuerpo -->
+        <div class="flex-1 flex flex-col gap-0.5 min-w-0">
+          <span
+            [ngClass]="{
+              'text-teal-900': getBranchStatus(branch.id) === 'completed',
+              'text-blue-900': getBranchStatus(branch.id) === 'in-progress',
+              'text-gray-400': getBranchStatus(branch.id) === 'locked'
+            }"
+            class="text-[13px] font-medium truncate">
+            {{ branch.label }}
+          </span>
+          <span class="text-[11px] text-gray-400">
+            {{ branch.modules.length }} módulos
+          </span>
+
+          <!-- Barra de progreso -->
+          @if (getBranchStatus(branch.id) !== 'locked') {
+            <div
+              class="h-[3px] rounded-full overflow-hidden mt-1.5 bg-gray-100"
+              role="progressbar"
+              [attr.aria-valuenow]="getProgress(branch.id)"
+              aria-valuemin="0"
+              aria-valuemax="100">
+              <div
+                [ngClass]="getBarColor(branch.id)"
+                class="h-full rounded-full transition-all duration-500"
+                [style.width.%]="getProgress(branch.id)">
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Porcentaje o candado -->
+        @if (getBranchStatus(branch.id) === 'locked') {
+          <i class="ti ti-lock text-sm text-gray-400 shrink-0" aria-label="Bloqueado"></i>
+        } @else {
+          <span
+            [ngClass]="{
+              'text-teal-700': getBranchStatus(branch.id) === 'completed',
+              'text-blue-700': getBranchStatus(branch.id) === 'in-progress'
+            }"
+            class="text-xs font-medium shrink-0">
+            {{ getProgress(branch.id) }}%
+          </span>
+        }
+
+      </li>
+
+    }
+
+  </ul>
+
+</div>

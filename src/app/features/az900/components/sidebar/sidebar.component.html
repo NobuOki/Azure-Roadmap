@@ -1,0 +1,82 @@
+<!-- sidebar.component.html -->
+<aside class="flex flex-col gap-2.5" aria-label="Detalle del branch">
+
+  <!-- Anillo de progreso global -->
+  <div class="bg-white border border-gray-200 rounded-xl p-3.5 text-center">
+    <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-2.5">
+      Progreso global
+    </p>
+    <svg
+      class="block mx-auto"
+      viewBox="0 0 80 80" width="80" height="80"
+      role="img"
+      [attr.aria-label]="overallProgress() + '% de progreso general'">
+      <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" stroke-width="6"/>
+      <circle
+        cx="40" cy="40" r="32"
+        fill="none" stroke="#185FA5" stroke-width="6"
+        stroke-linecap="round"
+        [attr.stroke-dasharray]="2 * 3.14159 * 32"
+        [attr.stroke-dashoffset]="ringOffset()"
+        transform="rotate(-90 40 40)"
+        class="ring-transition"/>
+      <text x="40" y="45" text-anchor="middle"
+            font-size="14" font-weight="500" fill="#185FA5">
+        {{ overallProgress() }}%
+      </text>
+    </svg>
+  </div>
+
+  <!-- Detalle del branch seleccionado -->
+  @if (selectedBranch()) {
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5">
+
+      <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-1.5">
+        Branch activo
+      </p>
+      <h2 class="text-[15px] font-medium text-gray-900 mb-0.5">
+        {{ selectedBranch()!.label }}
+      </h2>
+      <p class="text-[11px] text-gray-400 mb-3">
+        {{ selectedBranch()!.modules.length }} módulos ·
+        {{ selectedBranchProgress() }}%
+      </p>
+
+      <!-- Lista de módulos del branch -->
+      @for (mod of selectedBranch()!.modules; track mod.id) {
+
+        <div class="mb-3">
+          <p class="text-[11px] font-medium text-gray-700 mb-1">{{ mod.label }}</p>
+
+          <!-- Unidades del módulo -->
+          <ul class="flex flex-col">
+            @for (unit of mod.units; track unit.id) {
+              <li class="flex items-center gap-2 py-1.5
+                         border-b border-gray-100 last:border-b-0">
+                <span
+                  [ngClass]="getDotColor(unit.status)"
+                  class="w-1.5 h-1.5 rounded-full shrink-0"
+                  aria-hidden="true">
+                </span>
+                <span class="text-[11px] text-gray-800 flex-1">
+                  {{ unit.label }}
+                </span>
+                @if (getUnitIcon(unit.status)) {
+                  <i
+                    [ngClass]="[getUnitIcon(unit.status), getUnitColor(unit.status)]"
+                    class="ti text-[12px] shrink-0">
+                  </i>
+                } @else {
+                  <span class="text-[11px] text-gray-300">—</span>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+
+      }
+
+    </div>
+  }
+
+</aside>

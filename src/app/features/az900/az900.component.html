@@ -1,0 +1,73 @@
+<!-- az900.component.html — corregido -->
+<main class="bg-gray-50 rounded-2xl p-6 flex flex-col gap-4 min-h-screen">
+
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <header class="flex justify-between items-start">
+    <div>
+      <h1 class="text-xl font-medium text-gray-900 tracking-tight">
+        {{ course().title }}
+      </h1>
+      <p class="text-sm text-gray-400">{{ course().subtitle }}</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-right">
+      <span class="text-2xl font-medium text-gray-900 leading-none">
+        {{ overallProgress() }}%
+      </span>
+      <p class="text-[10px] uppercase tracking-widest text-gray-400">overall progress</p>
+    </div>
+  </header>
+
+  <!-- ── Stat Cards ──────────────────────────────────────────────────────── -->
+  <section class="grid grid-cols-3 gap-2.5" aria-label="Estadísticas rápidas">
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1
+                transition-transform hover:-translate-y-0.5 hover:shadow-sm">
+      <i class="ti ti-topology-star text-teal-700 text-xl mb-1" aria-hidden="true"></i>
+      <span class="text-xl font-medium text-gray-900 leading-none">
+        {{ activeModulesCount() }}/{{ totalBranches() }}
+      </span>
+      <span class="text-[11px] text-gray-400">módulos iniciados</span>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1
+                transition-transform hover:-translate-y-0.5 hover:shadow-sm">
+      <i class="ti ti-clock text-blue-700 text-xl mb-1" aria-hidden="true"></i>
+      <span class="text-xl font-medium text-gray-900 leading-none">
+        {{ totalStudyHours() }}h
+      </span>
+      <span class="text-[11px] text-gray-400">tiempo de estudio</span>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1
+                transition-transform hover:-translate-y-0.5 hover:shadow-sm">
+      <i class="ti ti-flame text-amber-700 text-xl mb-1" aria-hidden="true"></i>
+      <span class="text-xl font-medium text-gray-900 leading-none">
+        {{ studyStreak() }}d
+      </span>
+      <span class="text-[11px] text-gray-400">racha de estudio</span>
+    </div>
+
+  </section>
+
+  <!-- ── Main Grid ───────────────────────────────────────────────────────── -->
+  <section class="grid grid-cols-[1fr_220px] gap-2.5 items-start">
+
+    <!-- Columna izquierda -->
+    <div class="flex flex-col gap-2.5">
+
+      <!-- Mapa Conceptual -->
+      <app-conceptual-map />
+
+      <!-- Roadmap Card -->
+      <app-roadmap-card
+        [selectedBranchId]="selectedBranchId()"
+        (branchSelected)="selectedBranchId.set($event)" />
+
+    </div>
+
+    <!-- Sidebar -->
+    <app-sidebar [selectedBranchId]="selectedBranchId()" />
+
+  </section>
+
+</main>

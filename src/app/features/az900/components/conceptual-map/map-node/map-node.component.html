@@ -1,0 +1,33 @@
+<!-- map-node.component.html -->
+<!--
+  Template del nodo individual.
+  Preparado para uso futuro en implementación HTML-only.
+  Actualmente el renderizado ocurre inline en conceptual-map.component.html
+-->
+
+<div
+  class="flex items-center gap-2 w-full h-full"
+  [class.cursor-pointer]="node().hasChildren"
+  (click)="onToggle()">
+
+  <!-- Dot de estado (solo units L3) -->
+  @if (node().level === 3) {
+    <span
+      [style.background]="getStatusDot(node().status)"
+      class="w-1.5 h-1.5 rounded-full shrink-0">
+    </span>
+  }
+
+  <!-- Texto -->
+  <span class="truncate">{{ node().label }}</span>
+
+  <!-- Indicador de expansión (solo nodos con hijos) -->
+  @if (node().hasChildren) {
+    <span
+      class="ml-auto shrink-0 text-[10px] transition-transform duration-200"
+      [class.rotate-180]="expanded()">
+      ▼
+    </span>
+  }
+
+</div>
