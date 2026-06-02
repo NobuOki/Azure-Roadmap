@@ -1,4 +1,5 @@
 # CONTEXT.md — Azure Roadmap Dashboard
+
 > Documento de contexto técnico para continuar el proyecto en cualquier chat o IA.
 > Última actualización: Paso 6 completado — arquitectura conectada y funcional.
 
@@ -11,6 +12,7 @@ Nació de la necesidad de trackear el progreso en el curso **Azure AZ-900** de M
 Diseñado como **molde genérico** — funciona para cualquier curso o tema de estudio.
 
 **Stack:**
+
 - Angular 17+ (Signals API, standalone components, `@if`, `@for`)
 - Tailwind CSS v3 + PostCSS
 - SVG con `foreignObject` para el mapa conceptual
@@ -58,29 +60,48 @@ src/app/
 ## Modelo de datos
 
 ### Árbol del mapa (3 niveles fijos)
+
 ```typescript
 // map-node.model.ts
-type UnitStatus  = 'pending' | 'in-progress' | 'done';
+type UnitStatus = 'pending' | 'in-progress' | 'done';
 type BranchColor = 'blue' | 'purple' | 'pink';
 
-interface Unit   { id: string; label: string; status: UnitStatus; }
-interface Module { id: string; label: string; units: Unit[]; }
-interface Branch { id: string; label: string; color: BranchColor; modules: Module[]; }
-interface ConceptualMap { title: string; branches: Branch[]; }
+interface Unit {
+   id: string;
+   label: string;
+   status: UnitStatus;
+}
+interface Module {
+   id: string;
+   label: string;
+   units: Unit[];
+}
+interface Branch {
+   id: string;
+   label: string;
+   color: BranchColor;
+   modules: Module[];
+}
+interface ConceptualMap {
+   title: string;
+   branches: Branch[];
+}
 ```
 
 **Regla clave:** el progreso NO se guarda — se calcula en cascada:
+
 ```
 Unit.status → calcUnitProgress() → calcModuleProgress() → calcBranchProgress() → overallProgress
 ```
 
 ### Estado del dashboard
+
 ```typescript
 // dashboard.model.ts
 interface DashboardState {
-  course:   CourseInfo;      // → GET /api/course/{id}     (futuro)
-  map:      ConceptualMap;   // → GET /api/map/{courseId}  (futuro)
-  sessions: StudySession[];  // → GET /api/sessions/{id}   (futuro)
+   course: CourseInfo; // → GET /api/course/{id}     (futuro)
+   map: ConceptualMap; // → GET /api/map/{courseId}  (futuro)
+   sessions: StudySession[]; // → GET /api/sessions/{id}   (futuro)
 }
 ```
 
@@ -117,10 +138,12 @@ export class DashboardService {
 ## Mapa conceptual — cómo funciona
 
 ### SVG con foreignObject
+
 Todos los elementos (paths, joints, nodos HTML) viven en **un solo SVG**.
 Los nodos HTML se embeben con `<foreignObject>` — garantiza coordinadas exactas.
 
 ### Algoritmo de layout dinámico
+
 ```typescript
 // conceptual-map.component.ts
 private expansion = signal<Record<string, boolean>>({ b1: true });
@@ -137,23 +160,26 @@ interface MapLayout {
 ```
 
 ### Orden de dibujo SVG (efecto spine tricolor)
+
 ```
 Branch más lejano (B3 pink)   → dibujado PRIMERO (queda debajo)
 Branch intermedio (B2 purple) → dibujado SEGUNDO (tapa el pink arriba)
 Branch más cercano (B1 blue)  → dibujado ÚLTIMO  (queda encima)
 ```
+
 Mismo principio se repite en sub-niveles.
 
 ### Paths SVG — dos tipos
+
 ```typescript
 // L-shaped: vertical → curva 90° → horizontal (spine a nodo)
-`M${sx} ${sy} L${sx} ${ty-10} M${sx} ${ty-10} Q${sx} ${ty} ${sx+10} ${ty} M${sx+10} ${ty} L${tx} ${ty}`
-
+`M${sx} ${sy} L${sx} ${ty - 10} M${sx} ${ty - 10} Q${sx} ${ty} ${sx + 10} ${ty} M${sx + 10} ${ty} L${tx} ${ty}`
 // Vertical recto: nodo bottom → joint center
-`M${x} ${y1} L${x} ${y2}`
+`M${x} ${y1} L${x} ${y2}`;
 ```
 
 ### Posiciones X fijas por nivel
+
 ```
 Spine:   x=35
 L1:      x=65   joint cx=81
@@ -162,6 +188,7 @@ L3:      x=139
 ```
 
 ### Posiciones Y dinámicas (computed en cascada)
+
 ```
 B2.y = b1SubtreeBottom + L1_GAP
 B3.y = b2SubtreeBottom + L1_GAP
@@ -183,6 +210,7 @@ DashboardService (singleton)
 
 **Regla:** el template nunca accede al servicio directamente.
 El componente expone solo las propiedades que el template necesita:
+
 ```typescript
 // ✅ correcto
 readonly overallProgress = this.svc.overallProgress; // expuesto
@@ -195,18 +223,22 @@ private readonly svc = inject(DashboardService);      // privado
 
 ```html
 <!-- Valor arbitrario cuando no existe clase predefinida -->
-border-[3px]           → border-width: 3px
-grid-cols-[1fr_220px]  → grid-template-columns: 1fr 220px
-left-[10px]            → left: 10px
+border-[3px] → border-width: 3px grid-cols-[1fr_220px] → grid-template-columns: 1fr 220px
+left-[10px] → left: 10px
 
 <!-- Clases dinámicas con [ngClass] → deben estar en safelist del tailwind.config -->
 [ngClass]="{ 'bg-teal-50': status === 'completed' }"
 ```
 
 **SCSS residual** (solo 3 cosas que Tailwind no puede):
+
 ```scss
-.border        { border-width: 0.5px !important; } // Tailwind mínimo = 1px
-.ring-transition { transition: stroke-dashoffset 0.6s ease; } // propiedad SVG
+.border {
+   border-width: 0.5px !important;
+} // Tailwind mínimo = 1px
+.ring-transition {
+   transition: stroke-dashoffset 0.6s ease;
+} // propiedad SVG
 ```
 
 ---
@@ -215,9 +247,9 @@ left-[10px]            → left: 10px
 
 ```typescript
 const STORAGE_KEYS = {
-  course:   'dashboard_course',
-  map:      'dashboard_map',
-  sessions: 'dashboard_sessions',
+   course: 'dashboard_course',
+   map: 'dashboard_map',
+   sessions: 'dashboard_sessions',
 };
 // Una clave por "endpoint" → preparado para reemplazar con API real
 ```
@@ -294,4 +326,4 @@ El archivo CONTEXT.md en la raíz del proyecto tiene toda la documentación deta
 
 ---
 
-*Este archivo debe actualizarse cada vez que se completa una etapa significativa del proyecto.*
+_Este archivo debe actualizarse cada vez que se completa una etapa significativa del proyecto._

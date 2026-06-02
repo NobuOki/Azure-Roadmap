@@ -14,6 +14,7 @@ export class App {
 }
 */
 
+/*
 import { Component, signal } from '@angular/core';
 import { Az900Component } from './features/az900/az900.component';
  
@@ -26,5 +27,18 @@ import { Az900Component } from './features/az900/az900.component';
 })
 export class App {
   protected readonly title = signal('azure-roadmap');
-}
- 
+}*/
+
+// app.ts — actualizado para usar router
+// Reemplaza el import de Az900Component por RouterOutlet
+
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+   selector: 'app-root',
+   standalone: true,
+   imports: [RouterOutlet],
+   template: `<router-outlet />`,
+})
+export class App {}

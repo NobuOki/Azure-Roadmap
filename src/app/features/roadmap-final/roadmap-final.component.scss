@@ -13,14 +13,14 @@
 //    en las clases y el resultado visual es casi idéntico.
 //    Esta regla sobreescribe el border de las cards:
 .border {
-  border-width: 0.5px !important;
+   border-width: 0.5px !important;
 }
 
 // 2. Transición del anillo SVG (stroke-dashoffset)
 //    Tailwind anima `opacity`, `transform`, `color`, etc. pero NO propiedades
 //    SVG como stroke-dashoffset. Se necesita CSS puro.
 .ring-transition {
-  transition: stroke-dashoffset 0.6s ease;
+   transition: stroke-dashoffset 0.6s ease;
 }
 
 // 3. Tabler Icons — importar el webfont si no lo agregaste en index.html

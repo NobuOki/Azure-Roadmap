@@ -23,28 +23,30 @@ import { Component, input, output } from '@angular/core';
 import { RenderedNode } from '../conceptual-map.component';
 
 @Component({
-  selector: 'app-map-node',
-  standalone: true,
-  imports: [],
-  templateUrl: './map-node.component.html',
+   selector: 'app-map-node',
+   standalone: true,
+   imports: [],
+   templateUrl: './map-node.component.html',
 })
 export class MapNodeComponent {
+   // ── Inputs ─────────────────────────────────────────────────────────────────
+   node = input.required<RenderedNode>();
+   expanded = input<boolean>(false);
 
-  // ── Inputs ─────────────────────────────────────────────────────────────────
-  node     = input.required<RenderedNode>();
-  expanded = input<boolean>(false);
+   // ── Output ─────────────────────────────────────────────────────────────────
+   toggle = output<string>(); // emite el id del nodo al hacer click
 
-  // ── Output ─────────────────────────────────────────────────────────────────
-  toggle = output<string>(); // emite el id del nodo al hacer click
+   // ── Helpers ───────────────────────────────────────────────────────────────
+   onToggle(): void {
+      if (this.node().hasChildren) {
+         this.toggle.emit(this.node().id);
+      }
+   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  onToggle(): void {
-    if (this.node().hasChildren) {
-      this.toggle.emit(this.node().id);
-    }
-  }
-
-  getStatusDot(status: string | undefined): string {
-    return { done: '#0F6E56', 'in-progress': '#185FA5', pending: '#D3D1C7' }[status ?? 'pending'] ?? '#D3D1C7';
-  }
+   getStatusDot(status: string | undefined): string {
+      return (
+         { done: '#0F6E56', 'in-progress': '#185FA5', pending: '#D3D1C7' }[status ?? 'pending'] ??
+         '#D3D1C7'
+      );
+   }
 }

@@ -6,28 +6,29 @@
 -->
 
 <div
-  class="flex items-center gap-2 w-full h-full"
-  [class.cursor-pointer]="node().hasChildren"
-  (click)="onToggle()">
+   class="flex items-center gap-2 w-full h-full"
+   [class.cursor-pointer]="node().hasChildren"
+   (click)="onToggle()"
+>
+   <!-- Dot de estado (solo units L3) -->
+   @if (node().level === 3) {
+      <span
+         [style.background]="getStatusDot(node().status)"
+         class="w-1.5 h-1.5 rounded-full shrink-0"
+      >
+      </span>
+   }
 
-  <!-- Dot de estado (solo units L3) -->
-  @if (node().level === 3) {
-    <span
-      [style.background]="getStatusDot(node().status)"
-      class="w-1.5 h-1.5 rounded-full shrink-0">
-    </span>
-  }
+   <!-- Texto -->
+   <span class="truncate">{{ node().label }}</span>
 
-  <!-- Texto -->
-  <span class="truncate">{{ node().label }}</span>
-
-  <!-- Indicador de expansión (solo nodos con hijos) -->
-  @if (node().hasChildren) {
-    <span
-      class="ml-auto shrink-0 text-[10px] transition-transform duration-200"
-      [class.rotate-180]="expanded()">
-      ▼
-    </span>
-  }
-
+   <!-- Indicador de expansión (solo nodos con hijos) -->
+   @if (node().hasChildren) {
+      <span
+         class="ml-auto shrink-0 text-[10px] transition-transform duration-200"
+         [class.rotate-180]="expanded()"
+      >
+         ▼
+      </span>
+   }
 </div>

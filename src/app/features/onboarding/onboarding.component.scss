@@ -1,0 +1,15 @@
+/* onboarding.component.scss
+   Solo lo que Tailwind no puede hacer:*/
+
+/*Ocultar el marcador nativo del <details>/<summary>*/
+summary::-webkit-details-marker {
+   display: none;
+}
+summary::marker {
+   display: none;
+}
+
+/*2. Borde 0.5px (Tailwind mínimo es 1px con `border`)*/
+.border {
+   border-width: 0.5px !important;
+}

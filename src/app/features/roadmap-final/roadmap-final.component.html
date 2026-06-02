@@ -1,604 +1,1058 @@
 <main class="bg-gray-50 rounded-2xl p-6 flex flex-col gap-4 min-h-screen">
-
-  <!-- ── Header ──────────────────────────────────────────────────────────── -->
-  <header class="flex justify-between items-start">
-
-    <div class="flex flex-col gap-0.5">
-      <h1 class="text-xl font-medium text-gray-900 tracking-tight">Azure AZ-900</h1>
-      <p class="text-sm text-gray-400">Dashboard interactivo de aprendizaje</p>
-    </div>
-
-    <div class="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-right flex flex-col items-end gap-0.5">
-      <span class="text-2xl font-medium text-gray-900 leading-none">{{ overallProgress() }}%</span>
-      <span class="text-[10px] uppercase tracking-widest text-gray-400">overall progress</span>
-    </div>
-
-  </header>
-
-  <!-- ── Stat Cards ──────────────────────────────────────────────────────── -->
-  <section class="grid grid-cols-3 gap-2.5" aria-label="Estadísticas rápidas">
-
-    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm">
-      <i class="ti ti-topology-star text-teal-700 text-xl mb-1" aria-hidden="true"></i>
-      <span class="text-xl font-medium text-gray-900">{{ activeModulesCount() }}/{{ modules().length }}</span>
-      <span class="text-[11px] text-gray-400">módulos iniciados</span>
-    </div>
-
-    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm">
-      <i class="ti ti-clock text-blue-700 text-xl mb-1" aria-hidden="true"></i>
-      <span class="text-xl font-medium text-gray-900">{{ studyHours() }}h</span>
-      <span class="text-[11px] text-gray-400">tiempo de estudio</span>
-    </div>
-
-    <div class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm">
-      <i class="ti ti-flame text-amber-700 text-xl mb-1" aria-hidden="true"></i>
-      <span class="text-xl font-medium text-gray-900">{{ studyStreak() }}d</span>
-      <span class="text-[11px] text-gray-400">racha de estudio</span>
-    </div>
-
-  </section>
-
-  <!-- ── Main Grid ───────────────────────────────────────────────────────── -->
-  <section class="grid grid-cols-[1fr_220px] gap-2.5 items-start">
-
-    <!-- Conceptualmap Card -->
-
-    <!-- ── Conceptual Map Card — Spine dinámica con computed() ─────────────── -->
-
-    <section class="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4">
-    
-      <!-- Header + controles -->
-      <div class="mb-3 flex items-center justify-between">
-        <h2 class="text-sm font-medium text-gray-900">Mapa Conceptual</h2>
-        <div class="flex items-center gap-1.5">
-          <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
-                      bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700" (click)="resetCanvas()"
-            title="Restablecer vista">
-            <i class="ti ti-home text-[13px]"></i>
-          </button>
-          <div class="h-4 w-px bg-gray-200"></div>
-          <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
-                      bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
-                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomOut()" [disabled]="zoom() <= 0.3">
-            <i class="ti ti-minus text-[13px]"></i>
-          </button>
-          <span class="min-w-[38px] text-center text-[11px] font-medium text-gray-500">
-            {{ (zoom() * 100).toFixed(0) }}%
-          </span>
-          <button class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200
-                      bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700
-                      disabled:cursor-not-allowed disabled:opacity-40" (click)="zoomIn()" [disabled]="zoom() >= 2">
-            <i class="ti ti-plus text-[13px]"></i>
-          </button>
-        </div>
+   <!-- ── Header ──────────────────────────────────────────────────────────── -->
+   <header class="flex justify-between items-start">
+      <div class="flex flex-col gap-0.5">
+         <h1 class="text-xl font-medium text-gray-900 tracking-tight">Azure AZ-900</h1>
+         <p class="text-sm text-gray-400">Dashboard interactivo de aprendizaje</p>
       </div>
-    
-      <!-- Canvas -->
-      <div #canvasRef class="relative h-[400px] overflow-hidden rounded-lg bg-slate-50 select-none"
-        [class.cursor-grab]="!isDragging()" [class.cursor-grabbing]="isDragging()" (mousedown)="onMouseDown($event)"
-        (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()" (mouseleave)="onMouseUp()" (wheel)="onWheel($event)">
-    
-        <div class="absolute inset-0 origin-top-left" [style.transform]="mapTransform()">
-    
-          <!--
+
+      <div
+         class="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-right flex flex-col items-end gap-0.5"
+      >
+         <span class="text-2xl font-medium text-gray-900 leading-none"
+            >{{ overallProgress() }}%</span
+         >
+         <span class="text-[10px] uppercase tracking-widest text-gray-400">overall progress</span>
+      </div>
+   </header>
+
+   <!-- ── Stat Cards ──────────────────────────────────────────────────────── -->
+   <section class="grid grid-cols-3 gap-2.5" aria-label="Estadísticas rápidas">
+      <div
+         class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm"
+      >
+         <i class="ti ti-topology-star text-teal-700 text-xl mb-1" aria-hidden="true"></i>
+         <span class="text-xl font-medium text-gray-900"
+            >{{ activeModulesCount() }}/{{ modules().length }}</span
+         >
+         <span class="text-[11px] text-gray-400">módulos iniciados</span>
+      </div>
+
+      <div
+         class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm"
+      >
+         <i class="ti ti-clock text-blue-700 text-xl mb-1" aria-hidden="true"></i>
+         <span class="text-xl font-medium text-gray-900">{{ studyHours() }}h</span>
+         <span class="text-[11px] text-gray-400">tiempo de estudio</span>
+      </div>
+
+      <div
+         class="bg-white border border-gray-200 rounded-xl p-3.5 flex flex-col gap-1 transition-transform hover:-translate-y-0.5 hover:shadow-sm"
+      >
+         <i class="ti ti-flame text-amber-700 text-xl mb-1" aria-hidden="true"></i>
+         <span class="text-xl font-medium text-gray-900">{{ studyStreak() }}d</span>
+         <span class="text-[11px] text-gray-400">racha de estudio</span>
+      </div>
+   </section>
+
+   <!-- ── Main Grid ───────────────────────────────────────────────────────── -->
+   <section class="grid grid-cols-[1fr_220px] gap-2.5 items-start">
+      <!-- Conceptualmap Card -->
+
+      <!-- ── Conceptual Map Card — Spine dinámica con computed() ─────────────── -->
+
+      <section class="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-4">
+         <!-- Header + controles -->
+         <div class="mb-3 flex items-center justify-between">
+            <h2 class="text-sm font-medium text-gray-900">Mapa Conceptual</h2>
+            <div class="flex items-center gap-1.5">
+               <button
+                  class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700"
+                  (click)="resetCanvas()"
+                  title="Restablecer vista"
+               >
+                  <i class="ti ti-home text-[13px]"></i>
+               </button>
+               <div class="h-4 w-px bg-gray-200"></div>
+               <button
+                  class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  (click)="zoomOut()"
+                  [disabled]="zoom() <= 0.3"
+               >
+                  <i class="ti ti-minus text-[13px]"></i>
+               </button>
+               <span class="min-w-[38px] text-center text-[11px] font-medium text-gray-500">
+                  {{ (zoom() * 100).toFixed(0) }}%
+               </span>
+               <button
+                  class="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 transition hover:border-gray-300 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  (click)="zoomIn()"
+                  [disabled]="zoom() >= 2"
+               >
+                  <i class="ti ti-plus text-[13px]"></i>
+               </button>
+            </div>
+         </div>
+
+         <!-- Canvas -->
+         <div
+            #canvasRef
+            class="relative h-[400px] overflow-hidden rounded-lg bg-slate-50 select-none"
+            [class.cursor-grab]="!isDragging()"
+            [class.cursor-grabbing]="isDragging()"
+            (mousedown)="onMouseDown($event)"
+            (mousemove)="onMouseMove($event)"
+            (mouseup)="onMouseUp()"
+            (mouseleave)="onMouseUp()"
+            (wheel)="onWheel($event)"
+         >
+            <div class="absolute inset-0 origin-top-left" [style.transform]="mapTransform()">
+               <!--
                 SVG ÚNICO — ancho fijo, alto DINÁMICO
                 [attr.height]="svgHeight()" se recalcula cada vez que un joint cambia.
                 Todos los paths y posiciones se calculan con computed() en el .ts.
               -->
-          <svg [attr.width]="svgWidth" [attr.height]="svgHeight()" xmlns="http://www.w3.org/2000/svg">
-    
-            <!-- ════════════════════════════════════════════════════════════
+               <svg
+                  [attr.width]="svgWidth"
+                  [attr.height]="svgHeight()"
+                  xmlns="http://www.w3.org/2000/svg"
+               >
+                  <!-- ════════════════════════════════════════════════════════════
                     PASO 1: PATHS
                     Regla: far primero, near después (en todos los niveles)
                     Esto genera el efecto de color por sección sin gradiente.
                 ════════════════════════════════════════════════════════════ -->
-    
-            <!-- ── Pink: B3 (Administración y Gobernanza) ── -->
-            <!--
+
+                  <!-- ── Pink: B3 (Administración y Gobernanza) ── -->
+                  <!--
                   pathToB3: M35 66 → down → curve → B3 center_y
                   Como B3 es el branch más lejano, su path cubre toda la altura.
                   B2 y B1 se dibujarán encima, tapando el pink en la parte superior.
                 -->
-            <path [attr.d]="pathToB3()"
-              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
-            <!-- Vertical: B3 bottom → J3 center -->
-            <path [attr.d]="pathJB3()"
-              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
-    
-            @if (joint3()) {
-            <!--
+                  <path
+                     [attr.d]="pathToB3()"
+                     style="
+                        fill: transparent;
+                        stroke: rgb(247, 87, 140);
+                        stroke-width: 4;
+                        stroke-linecap: round;
+                     "
+                  />
+                  <!-- Vertical: B3 bottom → J3 center -->
+                  <path
+                     [attr.d]="pathJB3()"
+                     style="
+                        fill: transparent;
+                        stroke: rgb(247, 87, 140);
+                        stroke-width: 4;
+                        stroke-linecap: round;
+                     "
+                  />
+
+                  @if (joint3()) {
+                     <!--
                     Sub-árbol de B3:
                     Sub2 (far, dibujado primero) → Sub1 (near, dibujado después)
                     Sub1 puede tener hijos → empuja Sub2 hacia abajo automáticamente
                     porque yB3Sub2 depende de b3Sub1Bottom que depende de joint3Sub1
                   -->
-            <path [attr.d]="pathToB3Sub2()"
-              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathToB3Sub1()"
-              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathJB3Sub1()"
-              style="fill:transparent;stroke:rgb(247,87,140);stroke-width:4;stroke-linecap:round;" />
-    
-            @if (joint3Sub1()) {
-            <!-- L3 dotted: stroke-dasharray:0,5 con round caps = puntos -->
-            <path [attr.d]="pathToB3Sub1Nested()" style="fill:transparent;stroke:rgb(247,87,140);stroke-width:3;
-                                stroke-dasharray:0,5;stroke-linecap:round;" />
-            }
-            }
-    
-            <!-- ── Purple: B2 (Arquitectura y servicios) ── -->
-            <!--
+                     <path
+                        [attr.d]="pathToB3Sub2()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(247, 87, 140);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+                     <path
+                        [attr.d]="pathToB3Sub1()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(247, 87, 140);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+                     <path
+                        [attr.d]="pathJB3Sub1()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(247, 87, 140);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+
+                     @if (joint3Sub1()) {
+                        <!-- L3 dotted: stroke-dasharray:0,5 con round caps = puntos -->
+                        <path
+                           [attr.d]="pathToB3Sub1Nested()"
+                           style="
+                              fill: transparent;
+                              stroke: rgb(247, 87, 140);
+                              stroke-width: 3;
+                              stroke-dasharray: 0, 5;
+                              stroke-linecap: round;
+                           "
+                        />
+                     }
+                  }
+
+                  <!-- ── Purple: B2 (Arquitectura y servicios) ── -->
+                  <!--
                   pathToB2: cubre hasta B2 center_y, tapa el pink en esa sección.
                   B2 center_y es dynamic: depende de b1SubBottom (posición de B1 expandido).
                 -->
-            <path [attr.d]="pathToB2()"
-              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathJB2()"
-              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
-    
-            @if (joint2()) {
-            <path [attr.d]="pathToB2Sub()"
-              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathJB2Sub()"
-              style="fill:transparent;stroke:rgb(161,121,242);stroke-width:4;stroke-linecap:round;" />
-    
-            @if (joint2Sub()) {
-            <path [attr.d]="pathToB2Nested()" style="fill:transparent;stroke:rgb(161,121,242);stroke-width:3;
-                                stroke-dasharray:0,5;stroke-linecap:round;" />
-            }
-            }
-    
-            <!-- ── Blue: B1 (Conceptos de Nube) ── -->
-            <!--
+                  <path
+                     [attr.d]="pathToB2()"
+                     style="
+                        fill: transparent;
+                        stroke: rgb(161, 121, 242);
+                        stroke-width: 4;
+                        stroke-linecap: round;
+                     "
+                  />
+                  <path
+                     [attr.d]="pathJB2()"
+                     style="
+                        fill: transparent;
+                        stroke: rgb(161, 121, 242);
+                        stroke-width: 4;
+                        stroke-linecap: round;
+                     "
+                  />
+
+                  @if (joint2()) {
+                     <path
+                        [attr.d]="pathToB2Sub()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(161, 121, 242);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+                     <path
+                        [attr.d]="pathJB2Sub()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(161, 121, 242);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+
+                     @if (joint2Sub()) {
+                        <path
+                           [attr.d]="pathToB2Nested()"
+                           style="
+                              fill: transparent;
+                              stroke: rgb(161, 121, 242);
+                              stroke-width: 3;
+                              stroke-dasharray: 0, 5;
+                              stroke-linecap: round;
+                           "
+                        />
+                     }
+                  }
+
+                  <!-- ── Blue: B1 (Conceptos de Nube) ── -->
+                  <!--
                   pathToB1: dibujado último → queda encima en la zona superior.
                   Sub-árbol de B1: Cost (far) primero, AP (near) después.
                   AP y Cost se auto-posicionan: si jointAP se abre, Cost baja.
                 -->
-            <path [attr.d]="pathToB1()"
-              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathJB1()"
-              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
-    
-            @if (joint1()) {
-            <!-- Cost (far) primero, AP (near) después -->
-            <path [attr.d]="pathToCost()"
-              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathToAP()"
-              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathJAP()"
-              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
-            <path [attr.d]="pathJCost()"
-              style="fill:transparent;stroke:rgb(64,112,255);stroke-width:4;stroke-linecap:round;" />
-    
-            @if (jointAP()) {
-            <path [attr.d]="pathToAPNested()" style="fill:transparent;stroke:rgb(64,112,255);stroke-width:3;
-                                stroke-dasharray:0,5;stroke-linecap:round;" />
-            }
-            @if (jointCost()) {
-            <path [attr.d]="pathToIniciativas()" style="fill:transparent;stroke:rgb(64,112,255);stroke-width:3;
-                                stroke-dasharray:0,5;stroke-linecap:round;" />
-            }
-            }
-    
-            <!-- ════════════════════════════════════════════════════════════
+                  <path
+                     [attr.d]="pathToB1()"
+                     style="
+                        fill: transparent;
+                        stroke: rgb(64, 112, 255);
+                        stroke-width: 4;
+                        stroke-linecap: round;
+                     "
+                  />
+                  <path
+                     [attr.d]="pathJB1()"
+                     style="
+                        fill: transparent;
+                        stroke: rgb(64, 112, 255);
+                        stroke-width: 4;
+                        stroke-linecap: round;
+                     "
+                  />
+
+                  @if (joint1()) {
+                     <!-- Cost (far) primero, AP (near) después -->
+                     <path
+                        [attr.d]="pathToCost()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(64, 112, 255);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+                     <path
+                        [attr.d]="pathToAP()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(64, 112, 255);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+                     <path
+                        [attr.d]="pathJAP()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(64, 112, 255);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+                     <path
+                        [attr.d]="pathJCost()"
+                        style="
+                           fill: transparent;
+                           stroke: rgb(64, 112, 255);
+                           stroke-width: 4;
+                           stroke-linecap: round;
+                        "
+                     />
+
+                     @if (jointAP()) {
+                        <path
+                           [attr.d]="pathToAPNested()"
+                           style="
+                              fill: transparent;
+                              stroke: rgb(64, 112, 255);
+                              stroke-width: 3;
+                              stroke-dasharray: 0, 5;
+                              stroke-linecap: round;
+                           "
+                        />
+                     }
+                     @if (jointCost()) {
+                        <path
+                           [attr.d]="pathToIniciativas()"
+                           style="
+                              fill: transparent;
+                              stroke: rgb(64, 112, 255);
+                              stroke-width: 3;
+                              stroke-dasharray: 0, 5;
+                              stroke-linecap: round;
+                           "
+                        />
+                     }
+                  }
+
+                  <!-- ════════════════════════════════════════════════════════════
                     PASO 2: JOINTS
                     cx fijo por nivel, cy dinámico con [attr.cy]
                     Patrón: outer + inner + transparent (área de click)
                 ════════════════════════════════════════════════════════════ -->
-    
-            <!-- ── L1 Joints (siempre visibles) ── -->
-            <!-- J1 Blue -->
-            <circle cx="81" [attr.cy]="cyJ1()" r="10" fill="white" stroke="rgb(64,112,255)" stroke-width="3" />
-            <!--<circle cx="81" [attr.cy]="cyJ1()" r="4" [attr.fill]="joint1() ? 'rgb(64,112,255)' : 'white'" />-->
-            <circle cx="81" [attr.cy]="cyJ1()" r="4" [attr.fill]="joint1() ? 'white' : 'rgb(64,112,255)'" />
-            <circle cx="81" [attr.cy]="cyJ1()" r="12" fill="transparent" class="cursor-pointer"
-              (click)="toggleJoint(joint1)" />
-    
-            <!-- J2 Purple -->
-            <circle cx="81" [attr.cy]="cyJ2()" r="10" fill="white" stroke="rgb(161,121,242)" stroke-width="3" />
-            <circle cx="81" [attr.cy]="cyJ2()" r="4" [attr.fill]="joint2() ? 'white': 'rgb(161,121,242)' " />
-            <circle cx="81" [attr.cy]="cyJ2()" r="12" fill="transparent" class="cursor-pointer"
-              (click)="toggleJoint(joint2)" />
-    
-            <!-- J3 Pink -->
-            <circle cx="81" [attr.cy]="cyJ3()" r="10" fill="white" stroke="rgb(247,87,140)" stroke-width="3" />
-            <circle cx="81" [attr.cy]="cyJ3()" r="4" [attr.fill]="joint3() ?  'white' : 'rgb(247,87,140)' " />
-            <circle cx="81" [attr.cy]="cyJ3()" r="12" fill="transparent" class="cursor-pointer"
-              (click)="toggleJoint(joint3)" />
-    
-            <!-- ── L2 Joints (aparecen con su branch expandido) ── -->
-            @if (joint1()) {
-            <circle cx="119" [attr.cy]="cyJAP()" r="8" fill="white" stroke="rgb(64,112,255)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyJAP()" r="3" [attr.fill]="jointAP() ? 'white' : 'rgb(64,112,255)' " />
-            <circle cx="119" [attr.cy]="cyJAP()" r="10" fill="transparent" class="cursor-pointer"
-              (click)="toggleJoint(jointAP)" />
-    
-            <circle cx="119" [attr.cy]="cyCostJ()" r="8" fill="white" stroke="rgb(64,112,255)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyCostJ()" r="3" [attr.fill]="jointCost() ? 'white' : 'rgb(64,112,255)' " />
-            <circle cx="119" [attr.cy]="cyCostJ()" r="10" fill="transparent" class="cursor-pointer"
-              (click)="toggleJoint(jointCost)" />
-            }
-    
-            @if (joint2()) {
-            <circle cx="119" [attr.cy]="cyJ2Sub()" r="8" fill="white" stroke="rgb(161,121,242)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyJ2Sub()" r="3" [attr.fill]="joint2Sub() ? 'white' : 'rgb(161,121,242)'" />
-            <circle cx="119" [attr.cy]="cyJ2Sub()" r="10" fill="transparent" class="cursor-pointer"
-              (click)="toggleJoint(joint2Sub)" />
-            }
-    
-            @if (joint3()) {
-            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="8" fill="white" stroke="rgb(247,87,140)" stroke-width="2.5" />
-            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="3" [attr.fill]="joint3Sub1() ? 'white' : 'rgb(247,87,140)'" />
-            <circle cx="119" [attr.cy]="cyJ3Sub1()" r="10" fill="transparent" class="cursor-pointer"
-              (click)="toggleJoint(joint3Sub1)" />
-            }
-    
-            <!-- ════════════════════════════════════════════════════════════
+
+                  <!-- ── L1 Joints (siempre visibles) ── -->
+                  <!-- J1 Blue -->
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ1()"
+                     r="10"
+                     fill="white"
+                     stroke="rgb(64,112,255)"
+                     stroke-width="3"
+                  />
+                  <!--<circle cx="81" [attr.cy]="cyJ1()" r="4" [attr.fill]="joint1() ? 'rgb(64,112,255)' : 'white'" />-->
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ1()"
+                     r="4"
+                     [attr.fill]="joint1() ? 'white' : 'rgb(64,112,255)'"
+                  />
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ1()"
+                     r="12"
+                     fill="transparent"
+                     class="cursor-pointer"
+                     (click)="toggleJoint(joint1)"
+                  />
+
+                  <!-- J2 Purple -->
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ2()"
+                     r="10"
+                     fill="white"
+                     stroke="rgb(161,121,242)"
+                     stroke-width="3"
+                  />
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ2()"
+                     r="4"
+                     [attr.fill]="joint2() ? 'white' : 'rgb(161,121,242)'"
+                  />
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ2()"
+                     r="12"
+                     fill="transparent"
+                     class="cursor-pointer"
+                     (click)="toggleJoint(joint2)"
+                  />
+
+                  <!-- J3 Pink -->
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ3()"
+                     r="10"
+                     fill="white"
+                     stroke="rgb(247,87,140)"
+                     stroke-width="3"
+                  />
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ3()"
+                     r="4"
+                     [attr.fill]="joint3() ? 'white' : 'rgb(247,87,140)'"
+                  />
+                  <circle
+                     cx="81"
+                     [attr.cy]="cyJ3()"
+                     r="12"
+                     fill="transparent"
+                     class="cursor-pointer"
+                     (click)="toggleJoint(joint3)"
+                  />
+
+                  <!-- ── L2 Joints (aparecen con su branch expandido) ── -->
+                  @if (joint1()) {
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJAP()"
+                        r="8"
+                        fill="white"
+                        stroke="rgb(64,112,255)"
+                        stroke-width="2.5"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJAP()"
+                        r="3"
+                        [attr.fill]="jointAP() ? 'white' : 'rgb(64,112,255)'"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJAP()"
+                        r="10"
+                        fill="transparent"
+                        class="cursor-pointer"
+                        (click)="toggleJoint(jointAP)"
+                     />
+
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyCostJ()"
+                        r="8"
+                        fill="white"
+                        stroke="rgb(64,112,255)"
+                        stroke-width="2.5"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyCostJ()"
+                        r="3"
+                        [attr.fill]="jointCost() ? 'white' : 'rgb(64,112,255)'"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyCostJ()"
+                        r="10"
+                        fill="transparent"
+                        class="cursor-pointer"
+                        (click)="toggleJoint(jointCost)"
+                     />
+                  }
+
+                  @if (joint2()) {
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJ2Sub()"
+                        r="8"
+                        fill="white"
+                        stroke="rgb(161,121,242)"
+                        stroke-width="2.5"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJ2Sub()"
+                        r="3"
+                        [attr.fill]="joint2Sub() ? 'white' : 'rgb(161,121,242)'"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJ2Sub()"
+                        r="10"
+                        fill="transparent"
+                        class="cursor-pointer"
+                        (click)="toggleJoint(joint2Sub)"
+                     />
+                  }
+
+                  @if (joint3()) {
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJ3Sub1()"
+                        r="8"
+                        fill="white"
+                        stroke="rgb(247,87,140)"
+                        stroke-width="2.5"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJ3Sub1()"
+                        r="3"
+                        [attr.fill]="joint3Sub1() ? 'white' : 'rgb(247,87,140)'"
+                     />
+                     <circle
+                        cx="119"
+                        [attr.cy]="cyJ3Sub1()"
+                        r="10"
+                        fill="transparent"
+                        class="cursor-pointer"
+                        (click)="toggleJoint(joint3Sub1)"
+                     />
+                  }
+
+                  <!-- ════════════════════════════════════════════════════════════
                     PASO 3: NODOS con foreignObject
                     [attr.y] dinámico — se recalcula automáticamente con computed()
                     x y width son fijos por nivel
                 ════════════════════════════════════════════════════════════ -->
-    
-            <!-- ── Main Chip ── -->
-            <foreignObject x="20" y="20" width="200" height="46">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                              justify-content:center;border-radius:18px;
-                              border:3px solid #00bcff;background:white;
-                              box-sizing:border-box;font-family:system-ui,sans-serif;">
-                <span style="font-size:15px;font-weight:bold;color:#3d474d;
-                                letter-spacing:-0.02em;">AZURE AZ-900</span>
-              </div>
-            </foreignObject>
-    
-            <!-- ── L1 Branches (siempre visibles, y dinámico) ── -->
-    
-            <!-- B1: Conceptos de Nube -->
-            <foreignObject x="65" [attr.y]="yB1()" width="165" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                              padding:0 14px;border-radius:13px;background:rgb(64,112,255);
-                              box-sizing:border-box;font-family:system-ui,sans-serif;">
-                <span style="font-size:13px;color:white;white-space:nowrap;">Conceptos de Nube</span>
-              </div>
-            </foreignObject>
-    
-            <!-- B2: Arquitectura y servicios -->
-            <!-- yB2 se recalcula cuando B1 se expande/colapsa -->
-            <foreignObject x="65" [attr.y]="yB2()" width="195" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                              padding:0 14px;border-radius:13px;background:rgb(161,121,242);
-                              box-sizing:border-box;font-family:system-ui,sans-serif;">
-                <span style="font-size:13px;color:white;white-space:nowrap;">Arquitectura y servicios</span>
-              </div>
-            </foreignObject>
-    
-            <!-- B3: Administración y Gobernanza -->
-            <!-- yB3 se recalcula cuando B1 o B2 se expanden/colapsan -->
-            <foreignObject x="65" [attr.y]="yB3()" width="250" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                              padding:0 14px;border-radius:13px;background:rgb(247,87,140);
-                              box-sizing:border-box;font-family:system-ui,sans-serif;">
-                <span style="font-size:13px;color:white;white-space:nowrap;">Administración y Gobernanza</span>
-              </div>
-            </foreignObject>
-    
-            <!-- ── L2 Sub-branches de B1 ── -->
-            @if (joint1()) {
-            <!-- Azure Policy -->
-            <foreignObject x="101" [attr.y]="yAP()" width="130" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                padding:0 12px;border-radius:13px;background:white;
-                                border:4px solid rgb(64,112,255);box-sizing:border-box;
-                                font-family:system-ui,sans-serif;">
-                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Azure Policy</span>
-              </div>
-            </foreignObject>
-    
-            <!-- Cost Management -->
-            <!-- yCost depende de si jointAP está abierto (AP puede tener hijos) -->
-            <foreignObject x="101" [attr.y]="yCost()" width="155" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                padding:0 12px;border-radius:13px;background:white;
-                                border:4px solid rgb(64,112,255);box-sizing:border-box;
-                                font-family:system-ui,sans-serif;">
-                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Cost Management</span>
-              </div>
-            </foreignObject>
-    
-            <!-- L3: Definiciones (hija de Azure Policy) -->
-            @if (jointAP()) {
-            <foreignObject x="139" [attr.y]="yAPNested()" width="120" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                  padding:0 12px;border-radius:13px;background:white;
-                                  border:2px dotted rgb(64,112,255);box-sizing:border-box;
-                                  font-family:system-ui,sans-serif;">
-                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Definiciones</span>
-              </div>
-            </foreignObject>
-            }
-    
-            <!-- L3: Iniciativas (hija de Cost Management) -->
-            @if (jointCost()) {
-            <!-- yIniciativas depende de yCost que depende de jointAP -->
-            <foreignObject x="139" [attr.y]="yIniciativas()" width="110" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                  padding:0 12px;border-radius:13px;background:white;
-                                  border:2px dotted rgb(64,112,255);box-sizing:border-box;
-                                  font-family:system-ui,sans-serif;">
-                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Iniciativas</span>
-              </div>
-            </foreignObject>
-            }
-            }
-    
-            <!-- ── L2 Sub-branch de B2 ── -->
-            @if (joint2()) {
-            <foreignObject x="101" [attr.y]="yB2Sub()" width="140" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                padding:0 12px;border-radius:13px;background:white;
-                                border:4px solid rgb(161,121,242);box-sizing:border-box;
-                                font-family:system-ui,sans-serif;">
-                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Cómputo y Redes</span>
-              </div>
-            </foreignObject>
-    
-            @if (joint2Sub()) {
-            <foreignObject x="139" [attr.y]="yB2Nested()" width="110" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                  padding:0 12px;border-radius:13px;background:white;
-                                  border:2px dotted rgb(161,121,242);box-sizing:border-box;
-                                  font-family:system-ui,sans-serif;">
-                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Azure VMs</span>
-              </div>
-            </foreignObject>
-            }
-            }
-    
-            <!-- ── L2 Sub-branches de B3 ── -->
-            @if (joint3()) {
-            <!-- B3Sub1: RBAC (near) -->
-            <foreignObject x="101" [attr.y]="yB3Sub1()" width="120" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                padding:0 12px;border-radius:13px;background:white;
-                                border:4px solid rgb(247,87,140);box-sizing:border-box;
-                                font-family:system-ui,sans-serif;">
-                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">RBAC</span>
-              </div>
-            </foreignObject>
-    
-            <!-- B3Sub2: Cumplimiento (far) -->
-            <!-- yB3Sub2 depende de b3Sub1Bottom (si joint3Sub1 abierto, baja) -->
-            <foreignObject x="101" [attr.y]="yB3Sub2()" width="130" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                padding:0 12px;border-radius:13px;background:white;
-                                border:4px solid rgb(247,87,140);box-sizing:border-box;
-                                font-family:system-ui,sans-serif;">
-                <span style="font-size:12px;color:#3d474d;white-space:nowrap;">Cumplimiento</span>
-              </div>
-            </foreignObject>
-    
-            @if (joint3Sub1()) {
-            <!-- yB3Sub1Nested depende de cyJ3Sub1 que depende de yB3Sub1 -->
-            <foreignObject x="139" [attr.y]="yB3Sub1Nested()" width="130" height="40">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;
-                                  padding:0 12px;border-radius:13px;background:white;
-                                  border:2px dotted rgb(247,87,140);box-sizing:border-box;
-                                  font-family:system-ui,sans-serif;">
-                <span style="font-size:11px;color:#6b7280;white-space:nowrap;">Roles y Permisos</span>
-              </div>
-            </foreignObject>
-            }
-            }
-    
-          </svg>
-    
-        </div>
-      </div>
-    
-      <p class="mt-2 text-[10px] text-gray-300">
-        Arrastra para mover · Ctrl+scroll para zoom
-      </p>
-    
-    </section>
 
-    
-    
+                  <!-- ── Main Chip ── -->
+                  <foreignObject x="20" y="20" width="200" height="46">
+                     <div
+                        xmlns="http://www.w3.org/1999/xhtml"
+                        style="
+                           width: 100%;
+                           height: 100%;
+                           display: flex;
+                           align-items: center;
+                           justify-content: center;
+                           border-radius: 18px;
+                           border: 3px solid #00bcff;
+                           background: white;
+                           box-sizing: border-box;
+                           font-family: system-ui, sans-serif;
+                        "
+                     >
+                        <span
+                           style="
+                              font-size: 15px;
+                              font-weight: bold;
+                              color: #3d474d;
+                              letter-spacing: -0.02em;
+                           "
+                           >AZURE AZ-900</span
+                        >
+                     </div>
+                  </foreignObject>
 
-    <!-- Sidebar -->
-    <aside class="flex flex-col gap-2.5" aria-label="Detalle del módulo">
+                  <!-- ── L1 Branches (siempre visibles, y dinámico) ── -->
 
-      <!-- Anillo de progreso global -->
-      <div class="bg-white border border-gray-200 rounded-xl p-3.5 text-center">
+                  <!-- B1: Conceptos de Nube -->
+                  <foreignObject x="65" [attr.y]="yB1()" width="165" height="40">
+                     <div
+                        xmlns="http://www.w3.org/1999/xhtml"
+                        style="
+                           width: 100%;
+                           height: 100%;
+                           display: flex;
+                           align-items: center;
+                           padding: 0 14px;
+                           border-radius: 13px;
+                           background: rgb(64, 112, 255);
+                           box-sizing: border-box;
+                           font-family: system-ui, sans-serif;
+                        "
+                     >
+                        <span style="font-size: 13px; color: white; white-space: nowrap"
+                           >Conceptos de Nube</span
+                        >
+                     </div>
+                  </foreignObject>
 
-        <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-2.5">Progreso global</p>
+                  <!-- B2: Arquitectura y servicios -->
+                  <!-- yB2 se recalcula cuando B1 se expande/colapsa -->
+                  <foreignObject x="65" [attr.y]="yB2()" width="195" height="40">
+                     <div
+                        xmlns="http://www.w3.org/1999/xhtml"
+                        style="
+                           width: 100%;
+                           height: 100%;
+                           display: flex;
+                           align-items: center;
+                           padding: 0 14px;
+                           border-radius: 13px;
+                           background: rgb(161, 121, 242);
+                           box-sizing: border-box;
+                           font-family: system-ui, sans-serif;
+                        "
+                     >
+                        <span style="font-size: 13px; color: white; white-space: nowrap"
+                           >Arquitectura y servicios</span
+                        >
+                     </div>
+                  </foreignObject>
 
-        <svg
-          class="block mx-auto"
-          viewBox="0 0 80 80"
-          width="80"
-          height="80"
-          role="img"
-          [attr.aria-label]="overallProgress() + '% de progreso general'">
-          <circle cx="40" cy="40" r="32"
-            fill="none"
-            stroke="#e5e7eb"
-            stroke-width="6" />
-          <circle
-            cx="40" cy="40" r="32"
-            fill="none"
-            stroke="#1d4ed8"
-            stroke-width="6"
-            stroke-linecap="round"
-            [attr.stroke-dasharray]="2 * 3.14159 * 32"
-            [attr.stroke-dashoffset]="ringOffset()"
-            transform="rotate(-90 40 40)"
-            class="ring-transition" />
-          <text
-            x="40" y="45"
-            text-anchor="middle"
-            font-size="14"
-            font-weight="500"
-            fill="#1d4ed8">
-            {{ overallProgress() }}%
-          </text>
-        </svg>
+                  <!-- B3: Administración y Gobernanza -->
+                  <!-- yB3 se recalcula cuando B1 o B2 se expanden/colapsan -->
+                  <foreignObject x="65" [attr.y]="yB3()" width="250" height="40">
+                     <div
+                        xmlns="http://www.w3.org/1999/xhtml"
+                        style="
+                           width: 100%;
+                           height: 100%;
+                           display: flex;
+                           align-items: center;
+                           padding: 0 14px;
+                           border-radius: 13px;
+                           background: rgb(247, 87, 140);
+                           box-sizing: border-box;
+                           font-family: system-ui, sans-serif;
+                        "
+                     >
+                        <span style="font-size: 13px; color: white; white-space: nowrap"
+                           >Administración y Gobernanza</span
+                        >
+                     </div>
+                  </foreignObject>
 
-      </div>
+                  <!-- ── L2 Sub-branches de B1 ── -->
+                  @if (joint1()) {
+                     <!-- Azure Policy -->
+                     <foreignObject x="101" [attr.y]="yAP()" width="130" height="40">
+                        <div
+                           xmlns="http://www.w3.org/1999/xhtml"
+                           style="
+                              width: 100%;
+                              height: 100%;
+                              display: flex;
+                              align-items: center;
+                              padding: 0 12px;
+                              border-radius: 13px;
+                              background: white;
+                              border: 4px solid rgb(64, 112, 255);
+                              box-sizing: border-box;
+                              font-family: system-ui, sans-serif;
+                           "
+                        >
+                           <span style="font-size: 12px; color: #3d474d; white-space: nowrap"
+                              >Azure Policy</span
+                           >
+                        </div>
+                     </foreignObject>
 
-      <!-- Detalle del módulo seleccionado -->
-      <div class="bg-white border border-gray-200 rounded-xl p-3.5">
+                     <!-- Cost Management -->
+                     <!-- yCost depende de si jointAP está abierto (AP puede tener hijos) -->
+                     <foreignObject x="101" [attr.y]="yCost()" width="155" height="40">
+                        <div
+                           xmlns="http://www.w3.org/1999/xhtml"
+                           style="
+                              width: 100%;
+                              height: 100%;
+                              display: flex;
+                              align-items: center;
+                              padding: 0 12px;
+                              border-radius: 13px;
+                              background: white;
+                              border: 4px solid rgb(64, 112, 255);
+                              box-sizing: border-box;
+                              font-family: system-ui, sans-serif;
+                           "
+                        >
+                           <span style="font-size: 12px; color: #3d474d; white-space: nowrap"
+                              >Cost Management</span
+                           >
+                        </div>
+                     </foreignObject>
 
-        <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-1.5">Módulo activo</p>
-        <h2 class="text-[15px] font-medium text-gray-900 mb-0.5">{{ selectedModule().name }}</h2>
-        <p class="text-[11px] text-gray-400 mb-3">
-          Módulo {{ selectedModule().id }} de {{ modules().length }} · {{ selectedModule().progress }}%
-        </p>
+                     <!-- L3: Definiciones (hija de Azure Policy) -->
+                     @if (jointAP()) {
+                        <foreignObject x="139" [attr.y]="yAPNested()" width="120" height="40">
+                           <div
+                              xmlns="http://www.w3.org/1999/xhtml"
+                              style="
+                                 width: 100%;
+                                 height: 100%;
+                                 display: flex;
+                                 align-items: center;
+                                 padding: 0 12px;
+                                 border-radius: 13px;
+                                 background: white;
+                                 border: 2px dotted rgb(64, 112, 255);
+                                 box-sizing: border-box;
+                                 font-family: system-ui, sans-serif;
+                              "
+                           >
+                              <span style="font-size: 11px; color: #6b7280; white-space: nowrap"
+                                 >Definiciones</span
+                              >
+                           </div>
+                        </foreignObject>
+                     }
 
-        <ul class="flex flex-col" role="list">
+                     <!-- L3: Iniciativas (hija de Cost Management) -->
+                     @if (jointCost()) {
+                        <!-- yIniciativas depende de yCost que depende de jointAP -->
+                        <foreignObject x="139" [attr.y]="yIniciativas()" width="110" height="40">
+                           <div
+                              xmlns="http://www.w3.org/1999/xhtml"
+                              style="
+                                 width: 100%;
+                                 height: 100%;
+                                 display: flex;
+                                 align-items: center;
+                                 padding: 0 12px;
+                                 border-radius: 13px;
+                                 background: white;
+                                 border: 2px dotted rgb(64, 112, 255);
+                                 box-sizing: border-box;
+                                 font-family: system-ui, sans-serif;
+                              "
+                           >
+                              <span style="font-size: 11px; color: #6b7280; white-space: nowrap"
+                                 >Iniciativas</span
+                              >
+                           </div>
+                        </foreignObject>
+                     }
+                  }
 
-          @for (sub of selectedModule().subtopics; track sub.name) {
+                  <!-- ── L2 Sub-branch de B2 ── -->
+                  @if (joint2()) {
+                     <foreignObject x="101" [attr.y]="yB2Sub()" width="140" height="40">
+                        <div
+                           xmlns="http://www.w3.org/1999/xhtml"
+                           style="
+                              width: 100%;
+                              height: 100%;
+                              display: flex;
+                              align-items: center;
+                              padding: 0 12px;
+                              border-radius: 13px;
+                              background: white;
+                              border: 4px solid rgb(161, 121, 242);
+                              box-sizing: border-box;
+                              font-family: system-ui, sans-serif;
+                           "
+                        >
+                           <span style="font-size: 12px; color: #3d474d; white-space: nowrap"
+                              >Cómputo y Redes</span
+                           >
+                        </div>
+                     </foreignObject>
 
-            <li class="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-b-0 last:pb-0">
+                     @if (joint2Sub()) {
+                        <foreignObject x="139" [attr.y]="yB2Nested()" width="110" height="40">
+                           <div
+                              xmlns="http://www.w3.org/1999/xhtml"
+                              style="
+                                 width: 100%;
+                                 height: 100%;
+                                 display: flex;
+                                 align-items: center;
+                                 padding: 0 12px;
+                                 border-radius: 13px;
+                                 background: white;
+                                 border: 2px dotted rgb(161, 121, 242);
+                                 box-sizing: border-box;
+                                 font-family: system-ui, sans-serif;
+                              "
+                           >
+                              <span style="font-size: 11px; color: #6b7280; white-space: nowrap"
+                                 >Azure VMs</span
+                              >
+                           </div>
+                        </foreignObject>
+                     }
+                  }
 
-              <span
-                [ngClass]="{
-                  'bg-teal-700':  sub.status === 'done',
-                  'bg-blue-700':  sub.status === 'active',
-                  'bg-gray-200':  sub.status === 'pending'
-                }"
-                class="w-1.5 h-1.5 rounded-full shrink-0"
-                aria-hidden="true">
-              </span>
+                  <!-- ── L2 Sub-branches de B3 ── -->
+                  @if (joint3()) {
+                     <!-- B3Sub1: RBAC (near) -->
+                     <foreignObject x="101" [attr.y]="yB3Sub1()" width="120" height="40">
+                        <div
+                           xmlns="http://www.w3.org/1999/xhtml"
+                           style="
+                              width: 100%;
+                              height: 100%;
+                              display: flex;
+                              align-items: center;
+                              padding: 0 12px;
+                              border-radius: 13px;
+                              background: white;
+                              border: 4px solid rgb(247, 87, 140);
+                              box-sizing: border-box;
+                              font-family: system-ui, sans-serif;
+                           "
+                        >
+                           <span style="font-size: 12px; color: #3d474d; white-space: nowrap"
+                              >RBAC</span
+                           >
+                        </div>
+                     </foreignObject>
 
-              <span class="text-[11px] text-gray-800 flex-1">{{ sub.name }}</span>
+                     <!-- B3Sub2: Cumplimiento (far) -->
+                     <!-- yB3Sub2 depende de b3Sub1Bottom (si joint3Sub1 abierto, baja) -->
+                     <foreignObject x="101" [attr.y]="yB3Sub2()" width="130" height="40">
+                        <div
+                           xmlns="http://www.w3.org/1999/xhtml"
+                           style="
+                              width: 100%;
+                              height: 100%;
+                              display: flex;
+                              align-items: center;
+                              padding: 0 12px;
+                              border-radius: 13px;
+                              background: white;
+                              border: 4px solid rgb(247, 87, 140);
+                              box-sizing: border-box;
+                              font-family: system-ui, sans-serif;
+                           "
+                        >
+                           <span style="font-size: 12px; color: #3d474d; white-space: nowrap"
+                              >Cumplimiento</span
+                           >
+                        </div>
+                     </foreignObject>
 
-              @if (sub.status === 'done') {
-                <i class="ti ti-check text-[12px] text-teal-700" aria-label="Completado"></i>
-              } @else if (sub.status === 'active') {
-                <i class="ti ti-player-play text-[12px] text-blue-700" aria-label="En curso"></i>
-              } @else {
-                <span class="text-[11px] text-gray-300" aria-label="Pendiente">—</span>
-              }
-
-            </li>
-
-          }
-
-        </ul>
-
-      </div>
-
-    </aside>
-
-    <!-- Roadmap Card -->
-    <div class="bg-white border border-gray-200 rounded-xl p-4">
-
-      <p class="text-[10px] uppercase tracking-[0.14em] text-gray-400 mb-3.5">
-        Roadmap — módulos del examen
-      </p>
-
-      <ul class="flex flex-col gap-2" role="list">
-
-        @for (module of modules(); track module.id) {
-
-          <li
-            [ngClass]="{
-              'bg-teal-50  border-teal-200':  module.status === 'completed',
-              'bg-blue-50  border-blue-200':  module.status === 'in-progress',
-              'bg-gray-100 border-gray-200 opacity-60': module.status === 'locked',
-              'ring-2 ring-blue-600 opacity-100': selectedModuleId() === module.id,
-              'cursor-pointer hover:-translate-y-px hover:shadow-md': module.status !== 'locked',
-              'cursor-default': module.status === 'locked'
-            }"
-            class="rounded-lg px-3.5 py-3 flex items-center gap-3 border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            (click)="selectModule(module)"
-            [attr.aria-current]="selectedModuleId() === module.id ? 'true' : null"
-            [attr.aria-disabled]="module.status === 'locked'"
-            role="button"
-            [tabindex]="module.status !== 'locked' ? 0 : -1"
-            (keydown.enter)="selectModule(module)"
-            (keydown.space)="selectModule(module)">
-
-            <!-- Badge numérico -->
-            <div
-              [ngClass]="{
-                'bg-teal-700 text-teal-50':  module.status === 'completed',
-                'bg-blue-700 text-blue-50':  module.status === 'in-progress',
-                'bg-gray-300 text-gray-500': module.status === 'locked'
-              }"
-              class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
-              {{ module.id }}
+                     @if (joint3Sub1()) {
+                        <!-- yB3Sub1Nested depende de cyJ3Sub1 que depende de yB3Sub1 -->
+                        <foreignObject x="139" [attr.y]="yB3Sub1Nested()" width="130" height="40">
+                           <div
+                              xmlns="http://www.w3.org/1999/xhtml"
+                              style="
+                                 width: 100%;
+                                 height: 100%;
+                                 display: flex;
+                                 align-items: center;
+                                 padding: 0 12px;
+                                 border-radius: 13px;
+                                 background: white;
+                                 border: 2px dotted rgb(247, 87, 140);
+                                 box-sizing: border-box;
+                                 font-family: system-ui, sans-serif;
+                              "
+                           >
+                              <span style="font-size: 11px; color: #6b7280; white-space: nowrap"
+                                 >Roles y Permisos</span
+                              >
+                           </div>
+                        </foreignObject>
+                     }
+                  }
+               </svg>
             </div>
+         </div>
 
-            <!-- Cuerpo -->
-            <div class="flex-1 flex flex-col gap-0.5 min-w-0">
+         <p class="mt-2 text-[10px] text-gray-300">Arrastra para mover · Ctrl+scroll para zoom</p>
+      </section>
 
-              <span
-                [ngClass]="{
-                  'text-teal-900': module.status === 'completed',
-                  'text-blue-900': module.status === 'in-progress',
-                  'text-gray-400': module.status === 'locked'
-                }"
-                class="text-[13px] font-medium truncate">
-                {{ module.name }}
-              </span>
+      <!-- Sidebar -->
+      <aside class="flex flex-col gap-2.5" aria-label="Detalle del módulo">
+         <!-- Anillo de progreso global -->
+         <div class="bg-white border border-gray-200 rounded-xl p-3.5 text-center">
+            <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-2.5">
+               Progreso global
+            </p>
 
-              <span
-                [ngClass]="{
-                  'text-teal-700': module.status === 'completed',
-                  'text-blue-700': module.status === 'in-progress',
-                  'text-gray-400': module.status === 'locked'
-                }"
-                class="text-[11px]">
-                {{ module.description }}
-              </span>
+            <svg
+               class="block mx-auto"
+               viewBox="0 0 80 80"
+               width="80"
+               height="80"
+               role="img"
+               [attr.aria-label]="overallProgress() + '% de progreso general'"
+            >
+               <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" stroke-width="6" />
+               <circle
+                  cx="40"
+                  cy="40"
+                  r="32"
+                  fill="none"
+                  stroke="#1d4ed8"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  [attr.stroke-dasharray]="2 * 3.14159 * 32"
+                  [attr.stroke-dashoffset]="ringOffset()"
+                  transform="rotate(-90 40 40)"
+                  class="ring-transition"
+               />
+               <text
+                  x="40"
+                  y="45"
+                  text-anchor="middle"
+                  font-size="14"
+                  font-weight="500"
+                  fill="#1d4ed8"
+               >
+                  {{ overallProgress() }}%
+               </text>
+            </svg>
+         </div>
 
-              @if (module.status !== 'locked') {
-                <!-- Progress bar -->
-                <div
+         <!-- Detalle del módulo seleccionado -->
+         <div class="bg-white border border-gray-200 rounded-xl p-3.5">
+            <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-1.5">
+               Módulo activo
+            </p>
+            <h2 class="text-[15px] font-medium text-gray-900 mb-0.5">
+               {{ selectedModule().name }}
+            </h2>
+            <p class="text-[11px] text-gray-400 mb-3">
+               Módulo {{ selectedModule().id }} de {{ modules().length }} ·
+               {{ selectedModule().progress }}%
+            </p>
+
+            <ul class="flex flex-col" role="list">
+               @for (sub of selectedModule().subtopics; track sub.name) {
+                  <li
+                     class="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-b-0 last:pb-0"
+                  >
+                     <span
+                        [ngClass]="{
+                           'bg-teal-700': sub.status === 'done',
+                           'bg-blue-700': sub.status === 'active',
+                           'bg-gray-200': sub.status === 'pending',
+                        }"
+                        class="w-1.5 h-1.5 rounded-full shrink-0"
+                        aria-hidden="true"
+                     >
+                     </span>
+
+                     <span class="text-[11px] text-gray-800 flex-1">{{ sub.name }}</span>
+
+                     @if (sub.status === 'done') {
+                        <i
+                           class="ti ti-check text-[12px] text-teal-700"
+                           aria-label="Completado"
+                        ></i>
+                     } @else if (sub.status === 'active') {
+                        <i
+                           class="ti ti-player-play text-[12px] text-blue-700"
+                           aria-label="En curso"
+                        ></i>
+                     } @else {
+                        <span class="text-[11px] text-gray-300" aria-label="Pendiente">—</span>
+                     }
+                  </li>
+               }
+            </ul>
+         </div>
+      </aside>
+
+      <!-- Roadmap Card -->
+      <div class="bg-white border border-gray-200 rounded-xl p-4">
+         <p class="text-[10px] uppercase tracking-[0.14em] text-gray-400 mb-3.5">
+            Roadmap — módulos del examen
+         </p>
+
+         <ul class="flex flex-col gap-2" role="list">
+            @for (module of modules(); track module.id) {
+               <li
                   [ngClass]="{
-                    'bg-teal-200': module.status === 'completed',
-                    'bg-blue-200': module.status === 'in-progress'
+                     'bg-teal-50  border-teal-200': module.status === 'completed',
+                     'bg-blue-50  border-blue-200': module.status === 'in-progress',
+                     'bg-gray-100 border-gray-200 opacity-60': module.status === 'locked',
+                     'ring-2 ring-blue-600 opacity-100': selectedModuleId() === module.id,
+                     'cursor-pointer hover:-translate-y-px hover:shadow-md':
+                        module.status !== 'locked',
+                     'cursor-default': module.status === 'locked',
                   }"
-                  class="h-[3px] rounded-full overflow-hidden mt-1.5"
-                  role="progressbar"
-                  [attr.aria-valuenow]="module.progress"
-                  aria-valuemin="0"
-                  aria-valuemax="100">
+                  class="rounded-lg px-3.5 py-3 flex items-center gap-3 border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  (click)="selectModule(module)"
+                  [attr.aria-current]="selectedModuleId() === module.id ? 'true' : null"
+                  [attr.aria-disabled]="module.status === 'locked'"
+                  role="button"
+                  [tabindex]="module.status !== 'locked' ? 0 : -1"
+                  (keydown.enter)="selectModule(module)"
+                  (keydown.space)="selectModule(module)"
+               >
+                  <!-- Badge numérico -->
                   <div
-                    [ngClass]="{
-                      'bg-teal-700': module.status === 'completed',
-                      'bg-blue-700': module.status === 'in-progress'
-                    }"
-                    class="h-full rounded-full transition-all duration-500"
-                    [style.width.%]="module.progress">
+                     [ngClass]="{
+                        'bg-teal-700 text-teal-50': module.status === 'completed',
+                        'bg-blue-700 text-blue-50': module.status === 'in-progress',
+                        'bg-gray-300 text-gray-500': module.status === 'locked',
+                     }"
+                     class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
+                  >
+                     {{ module.id }}
                   </div>
-                </div>
-              }
 
-            </div>
+                  <!-- Cuerpo -->
+                  <div class="flex-1 flex flex-col gap-0.5 min-w-0">
+                     <span
+                        [ngClass]="{
+                           'text-teal-900': module.status === 'completed',
+                           'text-blue-900': module.status === 'in-progress',
+                           'text-gray-400': module.status === 'locked',
+                        }"
+                        class="text-[13px] font-medium truncate"
+                     >
+                        {{ module.name }}
+                     </span>
 
-            <!-- Porcentaje o candado -->
-            @if (module.status === 'locked') {
-              <i class="ti ti-lock text-sm text-gray-400 shrink-0" aria-label="Bloqueado"></i>
-            } @else {
-              <span
-                [ngClass]="{
-                  'text-teal-700': module.status === 'completed',
-                  'text-blue-700': module.status === 'in-progress'
-                }"
-                class="text-xs font-medium shrink-0">
-                {{ module.progress }}%
-              </span>
+                     <span
+                        [ngClass]="{
+                           'text-teal-700': module.status === 'completed',
+                           'text-blue-700': module.status === 'in-progress',
+                           'text-gray-400': module.status === 'locked',
+                        }"
+                        class="text-[11px]"
+                     >
+                        {{ module.description }}
+                     </span>
+
+                     @if (module.status !== 'locked') {
+                        <!-- Progress bar -->
+                        <div
+                           [ngClass]="{
+                              'bg-teal-200': module.status === 'completed',
+                              'bg-blue-200': module.status === 'in-progress',
+                           }"
+                           class="h-[3px] rounded-full overflow-hidden mt-1.5"
+                           role="progressbar"
+                           [attr.aria-valuenow]="module.progress"
+                           aria-valuemin="0"
+                           aria-valuemax="100"
+                        >
+                           <div
+                              [ngClass]="{
+                                 'bg-teal-700': module.status === 'completed',
+                                 'bg-blue-700': module.status === 'in-progress',
+                              }"
+                              class="h-full rounded-full transition-all duration-500"
+                              [style.width.%]="module.progress"
+                           ></div>
+                        </div>
+                     }
+                  </div>
+
+                  <!-- Porcentaje o candado -->
+                  @if (module.status === 'locked') {
+                     <i
+                        class="ti ti-lock text-sm text-gray-400 shrink-0"
+                        aria-label="Bloqueado"
+                     ></i>
+                  } @else {
+                     <span
+                        [ngClass]="{
+                           'text-teal-700': module.status === 'completed',
+                           'text-blue-700': module.status === 'in-progress',
+                        }"
+                        class="text-xs font-medium shrink-0"
+                     >
+                        {{ module.progress }}%
+                     </span>
+                  }
+               </li>
             }
-
-          </li>
-
-        }
-
-      </ul>
-
-    </div>   
-
-  </section>
-
+         </ul>
+      </div>
+   </section>
 </main>

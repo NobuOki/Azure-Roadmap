@@ -1,0 +1,224 @@
+<!-- onboarding.component.html — Tailwind -->
+
+<main class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-5 py-10 gap-7">
+   <!-- ── Header ──────────────────────────────────────────────────────────── -->
+   <div class="flex flex-col items-center gap-3 text-center max-w-sm">
+      <span
+         class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full px-3.5 py-1 text-xs font-medium tracking-wide"
+      >
+         <i class="ti ti-chart-bar text-sm"></i>
+         Learning Dashboard
+      </span>
+
+      <h1 class="text-4xl font-medium text-gray-900 tracking-tight leading-tight">
+         Tu progreso,<br />tu ritmo.
+      </h1>
+
+      <p class="text-sm text-gray-400 leading-relaxed max-w-[300px]">
+         Sube el índice de cualquier curso y convierte tu aprendizaje en un dashboard visual e
+         interactivo.
+      </p>
+   </div>
+
+   <!-- ── Estado vacío: dropzone ───────────────────────────────────────────── -->
+   @if (state() === 'empty') {
+      <div
+         class="w-full max-w-[480px] flex flex-col items-center gap-4 px-8 py-12 rounded-2xl bg-white cursor-pointer border-[1.5px] border-dashed border-gray-200 transition-all duration-200 hover:border-blue-600 hover:bg-blue-50"
+         [class.border-blue-600]="isDragActive()"
+         [class.bg-blue-50]="isDragActive()"
+         (click)="openFilePicker()"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave()"
+         (drop)="onDrop($event)"
+      >
+         <!-- Ícono -->
+         <div
+            class="w-[60px] h-[60px] bg-gray-100 rounded-xl flex items-center justify-center text-2xl transition-colors duration-200"
+            [class.bg-blue-100]="isDragActive()"
+         >
+            📄
+         </div>
+
+         <!-- Texto -->
+         <div>
+            <p class="text-[15px] font-medium text-gray-900 text-center">
+               Arrastra tu archivo aquí
+            </p>
+            <p class="text-sm text-gray-400 text-center mt-1">
+               o <span class="text-blue-600 underline">selecciona desde tu dispositivo</span>
+            </p>
+         </div>
+
+         <!-- Chip formato -->
+         <div
+            class="flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 text-[11px] text-gray-400 font-mono mt-1"
+         >
+            <i class="ti ti-file-text text-[13px]"></i>
+            Solo archivos .txt
+         </div>
+      </div>
+   }
+
+   <!-- Input oculto -->
+   <input #fileInput type="file" accept=".txt" class="hidden" (change)="onFileSelected($event)" />
+
+   <!-- ── Estado cargado ───────────────────────────────────────────────────── -->
+   @if (state() === 'loaded' && parsedData()) {
+      <div
+         class="w-full max-w-[480px] bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col"
+      >
+         <!-- Info del archivo -->
+         <div class="flex items-center gap-3 px-5 py-[18px]">
+            <div
+               class="w-[42px] h-[42px] bg-blue-50 rounded-lg flex items-center justify-center text-xl shrink-0"
+            >
+               📄
+            </div>
+            <div class="flex-1">
+               <p class="text-sm font-medium text-gray-900">{{ fileName() }}</p>
+               <p class="text-xs text-gray-400 mt-0.5">{{ fileSize() }} · listo para procesar</p>
+            </div>
+            <button
+               class="w-[30px] h-[30px] rounded-full border-none bg-transparent flex items-center justify-center text-gray-400 text-base cursor-pointer transition-all hover:bg-gray-100 hover:text-red-500"
+               (click)="reset()"
+            >
+               <i class="ti ti-x"></i>
+            </button>
+         </div>
+
+         <!-- Vista previa -->
+         <div
+            class="mx-4 mb-4 bg-gray-50 border border-gray-200 rounded-xl p-3.5 flex flex-col gap-2.5"
+         >
+            <p class="text-[10px] uppercase tracking-[0.14em] text-gray-400">
+               Vista previa detectada
+            </p>
+
+            <div class="flex flex-col gap-1.5">
+               <!-- Curso raíz -->
+               <div class="flex items-center gap-2">
+                  <span class="w-[7px] h-[7px] rounded-full bg-blue-700 shrink-0"></span>
+                  <span class="text-[13px] text-gray-700 flex-1">{{
+                     parsedData()!.map.title
+                  }}</span>
+                  <span class="text-[11px] text-gray-400">curso principal</span>
+               </div>
+
+               <!-- Branches -->
+               @for (branch of parsedData()!.map.branches; track branch.id; let i = $index) {
+                  <div class="flex items-center gap-2 ml-3.5">
+                     <span
+                        class="w-[7px] h-[7px] rounded-full shrink-0"
+                        [style.background]="getBranchColor(i)"
+                     >
+                     </span>
+                     <span class="text-[13px] text-gray-700 flex-1">{{ branch.label }}</span>
+                     <span class="text-[11px] text-gray-400">
+                        {{ branch.modules.length }} módulo{{
+                           branch.modules.length !== 1 ? 's' : ''
+                        }}
+                     </span>
+                  </div>
+               }
+            </div>
+         </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="w-full max-w-[480px] flex flex-col gap-2">
+         <button
+            class="w-full py-3.5 bg-blue-700 text-white rounded-xl text-sm font-medium border-none cursor-pointer flex items-center justify-center gap-2 transition-colors hover:bg-blue-800"
+            (click)="confirm()"
+         >
+            Generar mi Dashboard
+            <i class="ti ti-arrow-right"></i>
+         </button>
+
+         <button
+            class="w-full py-3 bg-transparent text-gray-400 border border-gray-200 rounded-xl text-[13px] cursor-pointer transition-all hover:text-gray-700 hover:border-gray-400"
+            (click)="reset()"
+         >
+            Subir otro archivo
+         </button>
+      </div>
+   }
+
+   <!-- ── Estado error ──────────────────────────────────────────────────────── -->
+   @if (state() === 'error') {
+      <div
+         class="w-full max-w-[480px] bg-[#fff5f5] border border-red-200 rounded-2xl px-5 py-[18px] flex flex-col gap-2.5"
+      >
+         <div class="flex items-center gap-1.5 text-[13px] font-medium text-red-600">
+            <i class="ti ti-alert-triangle"></i>
+            Error en el archivo
+         </div>
+         <p class="text-xs text-red-500 font-mono bg-red-100 px-2.5 py-2 rounded-lg">
+            {{ errorMessage() }}
+         </p>
+         <p class="text-xs text-gray-400">Corrige el archivo y vuelve a subirlo.</p>
+      </div>
+
+      <button
+         class="w-full max-w-[480px] py-3 bg-transparent text-gray-400 border border-gray-200 rounded-xl text-[13px] cursor-pointer transition-all hover:text-gray-700 hover:border-gray-400"
+         (click)="reset()"
+      >
+         Intentar de nuevo
+      </button>
+   }
+
+   <!-- ── Guía colapsable ───────────────────────────────────────────────────── -->
+   <div class="w-full max-w-[480px]">
+      <details class="group">
+         <summary
+            class="flex items-center gap-2 px-[18px] py-3.5 bg-white border border-gray-200 rounded-2xl cursor-pointer text-[13px] font-medium text-gray-700 list-none transition-colors hover:bg-gray-50 group-open:rounded-b-none"
+         >
+            <i class="ti ti-file-description text-[15px] text-gray-400"></i>
+            ¿Cómo preparo mi archivo?
+            <span class="ml-auto text-xs font-normal text-gray-400"> Ver ejemplo </span>
+         </summary>
+
+         <div
+            class="bg-white border border-gray-200 border-t-0 rounded-b-2xl px-[18px] py-4 flex flex-col gap-3"
+         >
+            <!-- Bloque de código -->
+            <div class="bg-[#0f172a] rounded-lg p-4 font-mono text-xs leading-loose">
+               <span class="text-blue-400">COURSE:</span>
+               <span class="text-gray-200"> Azure AZ-900</span><br /><br />
+               <span class="text-purple-400">BRANCH:</span>
+               <span class="text-gray-200"> Conceptos de Nube</span><br />
+               <span class="text-gray-200">&nbsp;&nbsp;</span>
+               <span class="text-emerald-400">MODULE:</span>
+               <span class="text-gray-200"> Azure Policy</span><br />
+               <span class="text-pink-300">&nbsp;&nbsp;&nbsp;&nbsp;Definiciones de política</span
+               ><br />
+               <span class="text-pink-300">&nbsp;&nbsp;&nbsp;&nbsp;Iniciativas</span><br />
+               <span class="text-gray-200">&nbsp;&nbsp;</span>
+               <span class="text-emerald-400">MODULE:</span>
+               <span class="text-gray-200"> Cost Management</span><br />
+               <span class="text-pink-300">&nbsp;&nbsp;&nbsp;&nbsp;Calculadora de precios</span
+               ><br /><br />
+               <span class="text-purple-400">BRANCH:</span>
+               <span class="text-gray-200"> Arquitectura y Servicios</span><br />
+               <span class="text-gray-200">&nbsp;&nbsp;</span>
+               <span class="text-emerald-400">MODULE:</span>
+               <span class="text-gray-200"> Cómputo y Redes</span><br />
+               <span class="text-pink-300">&nbsp;&nbsp;&nbsp;&nbsp;Azure VMs</span>
+            </div>
+
+            <p class="text-xs text-gray-400 leading-relaxed">
+               Las palabras clave
+               <strong class="text-gray-700">COURSE</strong>,
+               <strong class="text-gray-700">BRANCH</strong> y
+               <strong class="text-gray-700">MODULE</strong>
+               deben ir seguidas de dos puntos. Las unidades son texto libre con 4 espacios de
+               sangría.
+            </p>
+         </div>
+      </details>
+   </div>
+
+   <!-- Footer -->
+   <p class="text-xs text-gray-400 text-center">
+      Funciona con cualquier curso · sin internet requerido
+   </p>
+</main>
