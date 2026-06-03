@@ -46,6 +46,14 @@ module.exports = {
       'bg-amber-400', 
       'bg-blue-400',
       'line-through',
+      // Paso 4 — branch row reactivo
+      'bg-teal-100', 
+      'text-teal-700',
+      'bg-blue-100', 
+      'text-blue-700',
+      'cursor-pointer', 
+      'cursor-default',
+      'tabular-nums',
       // Progress bars
       'bg-teal-200',
       'bg-blue-200',
