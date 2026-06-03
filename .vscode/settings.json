@@ -5,6 +5,7 @@
    "scss.lint.unknownAtRules": "ignore",
    "conventionalCommits.scopes": [
       "mapa-conceptual",
-      "dashboard"
+      "dashboard",
+      "roadmap-card"
    ]
 }

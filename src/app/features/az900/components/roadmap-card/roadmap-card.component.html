@@ -100,46 +100,59 @@
                </div>
 
                <!-- Unit rows -->
-               <ul class="flex flex-col gap-1">
-
+               <ul class="flex flex-col gap-0.5">
+               
                   @for (unit of mod.units; track unit.id) {
-
+               
                   <!-- Unit row -->
-                  <li class="flex items-center gap-2.5 py-1.5 px-2.5
-                             rounded-lg transition-colors duration-150" [ngClass]="{
-                        'hover:bg-white cursor-pointer': unit.status !== 'locked',
-                        'opacity-40 cursor-default':     unit.status === 'locked'
-                      }" (click)="onCycleUnit(unit.id, unit.status)">
-
-                     <!-- Dot de estado -->
-                     <span class="w-1.5 h-1.5 rounded-full shrink-0" [ngClass]="getUnitDotColor(unit.status)">
+                  <li class="group flex items-center gap-2.5 py-2 px-2.5 rounded-lg
+                                          transition-all duration-150" [ngClass]="{
+                                    'hover:bg-white hover:shadow-sm cursor-pointer': unit.status !== 'locked',
+                                    'opacity-40 cursor-default':                     unit.status === 'locked'
+                                    }" (click)="onCycleUnit(unit.id, unit.status)">
+               
+                     <!-- ── Dot de estado ── -->
+                     <span class="w-2 h-2 rounded-full shrink-0 transition-colors duration-200"
+                        [ngClass]="getUnitDotColor(unit.status)">
                      </span>
-
-                     <!-- Nombre de la unit -->
-                     <span class="text-[12px] flex-1" [ngClass]="{
-                          'text-gray-700': unit.status !== 'locked',
-                          'text-gray-400': unit.status === 'locked',
-                          'line-through text-teal-600': unit.status === 'done'
-                        }">
+               
+                     <!-- ── Nombre de la unit ── -->
+                     <span class="text-[12px] flex-1 leading-snug transition-all duration-200" [ngClass]="{
+                                       'text-gray-700':                              unit.status === 'pending',
+                                       'text-amber-600 font-medium':                 unit.status === 'in-progress',
+                                       'text-teal-700 line-through decoration-teal-400': unit.status === 'done',
+                                       'text-gray-400':                              unit.status === 'locked'
+                                    }">
                         {{ unit.label }}
                      </span>
-
-                     <!-- Botón de estado (icono a la derecha) -->
+               
+                     <!-- ── Botón de estado ── -->
                      @if (unit.status !== 'locked') {
-                     <button class="w-6 h-6 rounded-full flex items-center justify-center
-                                 border border-gray-200 bg-white shrink-0
-                                 transition-all hover:scale-110" [title]="unit.status"
+                     <button class="shrink-0 flex items-center gap-1 px-2 py-1 rounded-full
+                                             text-[10px] font-medium border transition-all duration-200
+                                             opacity-0 group-hover:opacity-100" [ngClass]="{
+                                          'bg-blue-50  border-blue-200  text-blue-600':  unit.status === 'pending',
+                                          'bg-amber-50 border-amber-200 text-amber-600': unit.status === 'in-progress',
+                                          'bg-teal-50  border-teal-200  text-teal-600':  unit.status === 'done'
+                                       }" [title]="getNextStatusLabel(unit.status)"
                         (click)="$event.stopPropagation(); onCycleUnit(unit.id, unit.status)">
-                        <i class="ti text-[11px]"
-                           [ngClass]="[getUnitStatusIcon(unit.status), getUnitStatusColor(unit.status)]">
+               
+                        <i class="ti text-[11px]" [ngClass]="getUnitStatusIcon(unit.status)">
                         </i>
+                        {{ getStatusLabel(unit.status) }}
+               
                      </button>
                      }
-
+               
+                     <!-- Candado para locked -->
+                     @if (unit.status === 'locked') {
+                     <i class="ti ti-lock text-[11px] text-gray-300 shrink-0"></i>
+                     }
+               
                   </li>
-
+               
                   }
-
+               
                </ul>
 
             </div>

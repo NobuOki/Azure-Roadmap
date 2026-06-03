@@ -80,12 +80,15 @@ export class RoadmapCardComponent {
       return Math.round((done / activable.length) * 100);
    }
 
-   // ── Unit row: estado visual ───────────────────────────────────────────────
+   // ─────────────────────────────────────────────────────────────────────────────
+   // También actualiza getUnitStatusIcon() para usar íconos más expresivos:
+   // ─────────────────────────────────────────────────────────────────────────────
+
    getUnitStatusIcon(status: UnitStatus): string {
       return (
          {
             done: 'ti-check',
-            'in-progress': 'ti-clock',
+            'in-progress': 'ti-loader-2', // ícono de reloj/carga
             pending: 'ti-circle',
             locked: 'ti-lock',
          }[status] ?? 'ti-circle'
@@ -158,6 +161,30 @@ export class RoadmapCardComponent {
             'in-progress': 'text-blue-700',
             locked: 'text-gray-400',
          }[this.getBranchStatus(branchId)] ?? ''
+      );
+   }
+
+   // Etiqueta del estado actual (se muestra en el botón)
+   getStatusLabel(status: UnitStatus): string {
+      return (
+         {
+            pending: 'Pendiente',
+            'in-progress': 'En curso',
+            done: 'Completado',
+            locked: '',
+         }[status] ?? ''
+      );
+   }
+
+   // Etiqueta del siguiente estado (tooltip del botón)
+   getNextStatusLabel(status: UnitStatus): string {
+      return (
+         {
+            pending: 'Marcar como En curso',
+            'in-progress': 'Marcar como Completado',
+            done: 'Marcar como Pendiente',
+            locked: '',
+         }[status] ?? ''
       );
    }
 
