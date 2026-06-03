@@ -1,87 +1,159 @@
 <!-- roadmap-card.component.html -->
+
 <div class="bg-white border border-gray-200 rounded-xl p-4">
+
    <p class="text-[10px] uppercase tracking-[0.14em] text-gray-400 mb-3.5">
       Roadmap — ramas del tema
    </p>
 
    <ul class="flex flex-col gap-2" role="list">
+
       @for (branch of branches(); track branch.id; let i = $index) {
-         <li
-            [ngClass]="{
-               'bg-teal-50  border-teal-200': getBranchStatus(branch.id) === 'completed',
-               'bg-blue-50  border-blue-200': getBranchStatus(branch.id) === 'in-progress',
-               'bg-gray-100 border-gray-200 opacity-60': getBranchStatus(branch.id) === 'locked',
-               'ring-2 ring-blue-600': selectedBranchId() === branch.id,
-               'cursor-pointer hover:-translate-y-px hover:shadow-md':
-                  getBranchStatus(branch.id) !== 'locked',
-               'cursor-default': getBranchStatus(branch.id) === 'locked',
-            }"
-            class="rounded-lg px-3.5 py-3 flex items-center gap-3 border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            (click)="onSelect(branch.id)"
-            role="button"
-            [tabindex]="getBranchStatus(branch.id) !== 'locked' ? 0 : -1"
-            (keydown.enter)="onSelect(branch.id)"
-            (keydown.space)="onSelect(branch.id)"
-         >
+
+      <!-- ── Branch row ─────────────────────────────────────────────────── -->
+      <li class="rounded-xl border transition-all duration-200 overflow-hidden" [ngClass]="getBranchRowBg(branch.id)"
+         [class.opacity-100]="isExpanded(branch.id)">
+
+         <!-- Branch row header — click para expandir/colapsar -->
+         <div class="flex items-center gap-3 px-3.5 py-3 cursor-pointer
+                 select-none" [class.opacity-100]="getBranchStatus(branch.id) !== 'locked'"
+            (click)="toggleExpand(branch.id)">
+
             <!-- Badge numérico -->
-            <div
-               [ngClass]="{
-                  'bg-teal-700 text-teal-50': getBranchStatus(branch.id) === 'completed',
-                  'bg-blue-700 text-blue-50': getBranchStatus(branch.id) === 'in-progress',
-                  'bg-gray-300 text-gray-500': getBranchStatus(branch.id) === 'locked',
-               }"
-               class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
-            >
+            <div class="w-7 h-7 rounded-full flex items-center justify-center
+                   text-xs font-medium shrink-0" [ngClass]="getBadgeBg(branch.id)">
                {{ i + 1 }}
             </div>
 
-            <!-- Cuerpo -->
+            <!-- Label + descripción -->
             <div class="flex-1 flex flex-col gap-0.5 min-w-0">
-               <span
-                  [ngClass]="{
-                     'text-teal-900': getBranchStatus(branch.id) === 'completed',
-                     'text-blue-900': getBranchStatus(branch.id) === 'in-progress',
-                     'text-gray-400': getBranchStatus(branch.id) === 'locked',
-                  }"
-                  class="text-[13px] font-medium truncate"
-               >
+               <span class="text-[13px] font-medium truncate" [ngClass]="{
+                'text-teal-900': getBranchStatus(branch.id) === 'completed',
+                'text-blue-900': getBranchStatus(branch.id) === 'in-progress',
+                'text-gray-400': getBranchStatus(branch.id) === 'locked'
+              }">
                   {{ branch.label }}
                </span>
-               <span class="text-[11px] text-gray-400"> {{ branch.modules.length }} módulos </span>
+               <span class="text-[11px] text-gray-400">
+                  {{ branch.modules.length }} módulos
+               </span>
 
-               <!-- Barra de progreso -->
+               <!-- Progress bar -->
                @if (getBranchStatus(branch.id) !== 'locked') {
-                  <div
-                     class="h-[3px] rounded-full overflow-hidden mt-1.5 bg-gray-100"
-                     role="progressbar"
-                     [attr.aria-valuenow]="getProgress(branch.id)"
-                     aria-valuemin="0"
-                     aria-valuemax="100"
-                  >
-                     <div
-                        [ngClass]="getBarColor(branch.id)"
-                        class="h-full rounded-full transition-all duration-500"
-                        [style.width.%]="getProgress(branch.id)"
-                     ></div>
+               <div class="h-[3px] rounded-full overflow-hidden mt-1.5 bg-gray-100" role="progressbar"
+                  [attr.aria-valuenow]="getProgress(branch.id)">
+                  <div class="h-full rounded-full transition-all duration-500" [ngClass]="getBarColor(branch.id)"
+                     [style.width.%]="getProgress(branch.id)">
                   </div>
+               </div>
                }
             </div>
 
-            <!-- Porcentaje o candado -->
-            @if (getBranchStatus(branch.id) === 'locked') {
-               <i class="ti ti-lock text-sm text-gray-400 shrink-0" aria-label="Bloqueado"></i>
-            } @else {
-               <span
-                  [ngClass]="{
-                     'text-teal-700': getBranchStatus(branch.id) === 'completed',
-                     'text-blue-700': getBranchStatus(branch.id) === 'in-progress',
-                  }"
-                  class="text-xs font-medium shrink-0"
-               >
+            <!-- Porcentaje o candado + chevron -->
+            <div class="flex items-center gap-2 shrink-0">
+               @if (getBranchStatus(branch.id) === 'locked') {
+               <i class="ti ti-lock text-sm text-gray-400"></i>
+               } @else {
+               <span class="text-xs font-medium" [ngClass]="getProgressTextColor(branch.id)">
                   {{ getProgress(branch.id) }}%
                </span>
+               }
+
+               <!-- Chevron expand/collapse -->
+               @if (getBranchStatus(branch.id) !== 'locked') {
+               <i class="ti ti-chevron-down text-sm text-gray-400
+                       transition-transform duration-200" [class.rotate-180]="isExpanded(branch.id)">
+               </i>
+               }
+            </div>
+
+         </div>
+
+         <!-- ── Branch detail (expandido) ─────────────────────────────────── -->
+         @if (isExpanded(branch.id)) {
+
+         <div class="border-t border-gray-100 px-3.5 pb-3 pt-2
+                      flex flex-col gap-3">
+
+            @for (mod of branch.modules; track mod.id) {
+
+            <!-- Module header -->
+            <div>
+               <div class="flex items-center justify-between mb-1.5">
+
+                  <span class="text-[11px] font-medium text-gray-600">
+                     {{ mod.label }}
+                  </span>
+
+                  <!-- Contador X/Y -->
+                  <span class="text-[11px] text-gray-400 font-mono">
+                     {{ getModuleUnitCount(mod) }}
+                  </span>
+
+               </div>
+
+               <!-- Mini progress bar del module -->
+               <div class="h-[2px] rounded-full bg-gray-100 overflow-hidden mb-2">
+                  <div class="h-full rounded-full transition-all duration-500" [ngClass]="getBarColor(branch.id)"
+                     [style.width.%]="getModuleProgress(mod)">
+                  </div>
+               </div>
+
+               <!-- Unit rows -->
+               <ul class="flex flex-col gap-1">
+
+                  @for (unit of mod.units; track unit.id) {
+
+                  <!-- Unit row -->
+                  <li class="flex items-center gap-2.5 py-1.5 px-2.5
+                             rounded-lg transition-colors duration-150" [ngClass]="{
+                        'hover:bg-white cursor-pointer': unit.status !== 'locked',
+                        'opacity-40 cursor-default':     unit.status === 'locked'
+                      }" (click)="onCycleUnit(unit.id, unit.status)">
+
+                     <!-- Dot de estado -->
+                     <span class="w-1.5 h-1.5 rounded-full shrink-0" [ngClass]="getUnitDotColor(unit.status)">
+                     </span>
+
+                     <!-- Nombre de la unit -->
+                     <span class="text-[12px] flex-1" [ngClass]="{
+                          'text-gray-700': unit.status !== 'locked',
+                          'text-gray-400': unit.status === 'locked',
+                          'line-through text-teal-600': unit.status === 'done'
+                        }">
+                        {{ unit.label }}
+                     </span>
+
+                     <!-- Botón de estado (icono a la derecha) -->
+                     @if (unit.status !== 'locked') {
+                     <button class="w-6 h-6 rounded-full flex items-center justify-center
+                                 border border-gray-200 bg-white shrink-0
+                                 transition-all hover:scale-110" [title]="unit.status"
+                        (click)="$event.stopPropagation(); onCycleUnit(unit.id, unit.status)">
+                        <i class="ti text-[11px]"
+                           [ngClass]="[getUnitStatusIcon(unit.status), getUnitStatusColor(unit.status)]">
+                        </i>
+                     </button>
+                     }
+
+                  </li>
+
+                  }
+
+               </ul>
+
+            </div>
+
             }
-         </li>
+
+         </div>
+
+         }
+
+      </li>
+
       }
+
    </ul>
+
 </div>
