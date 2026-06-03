@@ -43,6 +43,21 @@ export class RoadmapCardComponent {
       return this.expandedBranchId() === branchId;
    }
 
+   // Un signal por branch para saber qué module está expandido
+   // Record<branchId, moduleId | null>
+   expandedModuleId = signal<Record<string, string | null>>({});
+
+   toggleModule(branchId: string, moduleId: string): void {
+      this.expandedModuleId.update((state) => ({
+         ...state,
+         [branchId]: state[branchId] === moduleId ? null : moduleId,
+      }));
+   }
+
+   isModuleExpanded(branchId: string, moduleId: string): boolean {
+      return this.expandedModuleId()[branchId] === moduleId;
+   }
+
    // ── Helpers ───────────────────────────────────────────────────────────────
 
    // Obtiene el progreso de un branch por su id
@@ -65,10 +80,10 @@ export class RoadmapCardComponent {
    }
 
    // ── Module header: contador X/Y ───────────────────────────────────────────
-   // X = units done, Y = total units sin contar locked
+   // X = units done, Y = total units
    getModuleUnitCount(mod: Module): string {
-      const total = mod.units.filter((u) => u.status !== 'locked').length;
-      const done = mod.units.filter((u) => u.status === 'done').length;
+      const total = mod.units.length;  // todas, incluyendo locked
+      const done  = mod.units.filter(u => u.status === 'done').length;
       return `${done}/${total}`;
    }
 
