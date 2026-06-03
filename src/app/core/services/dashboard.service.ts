@@ -31,6 +31,14 @@ const STORAGE_KEYS = {
    sessions: 'dashboard_sessions',
 } as const;
 
+// Ciclo de estados — pending → in-progress → done → pending
+const STATUS_CYCLE: Record<UnitStatus, UnitStatus> = {
+   pending: 'in-progress',
+   'in-progress': 'done',
+   done: 'pending',
+   locked: 'locked',
+};
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
    // ══════════════════════════════════════════════════════════════════════════
@@ -78,7 +86,9 @@ export class DashboardService {
    activeModulesCount = computed(
       () =>
          this._map().branches.filter((branch) =>
-            branch.modules.some((mod) => mod.units.some((u) => u.status !== 'pending')),
+            branch.modules.some((mod) =>
+               mod.units.some((u) => u.status !== 'pending' && u.status !== 'locked'),
+            ),
          ).length,
    );
 
@@ -121,9 +131,53 @@ export class DashboardService {
       return streak;
    });
 
+   // ── Computed para el sidebar ───────────────────────────────────────────────
+   // Retorna las units de un branch agrupadas por estado
+   getBranchUnitSummary(branchId: string) {
+      return computed(() => {
+         const branch = this._map().branches.find((b) => b.id === branchId);
+         if (!branch) return { pending: [], done: [] };
+
+         const allUnits = branch.modules.flatMap((m) => m.units);
+         return {
+            pending: allUnits.filter((u) => u.status === 'pending' || u.status === 'in-progress'),
+            done: allUnits.filter((u) => u.status === 'done'),
+         };
+      });
+   }
+
    // ══════════════════════════════════════════════════════════════════════════
    // MÉTODOS PÚBLICOS — actualizan el estado y persisten en localStorage
    // ══════════════════════════════════════════════════════════════════════════
+
+   // Toggle cíclico: pending → in-progress → done → pending
+   // Al llegar a 'done' desbloquea automáticamente la siguiente unit
+   cycleUnitStatus(unitId: string): void {
+      let completedUnitId: string | null = null;
+
+      this._map.update((map) => ({
+         ...map,
+         branches: map.branches.map((branch) => ({
+            ...branch,
+            modules: branch.modules.map((mod) => ({
+               ...mod,
+               units: mod.units.map((unit) => {
+                  if (unit.id !== unitId) return unit;
+                  const nextStatus = STATUS_CYCLE[unit.status] ?? 'pending';
+                  if (nextStatus === 'done') completedUnitId = unitId;
+                  return { ...unit, status: nextStatus };
+               }),
+            })),
+         })),
+      }));
+
+      // Si llegó a done → desbloquea la siguiente unit
+      if (completedUnitId) {
+         this.unlockNextUnit(completedUnitId);
+      }
+
+      this.saveMap();
+   }
 
    // ── Actualizar status de una unidad ──────────────────────────────────────
    // Es el único punto de entrada para modificar el progreso.
@@ -142,13 +196,12 @@ export class DashboardService {
       this.saveMap();
    }
 
-   // Agrega este método en DashboardService
-   // junto a updateUnitStatus() y addSession()
-
+   // Carga datos parseados del onboarding con lock state inicializado
    loadFromParsed(state: DashboardState): void {
+      const mapWithLocks = this.initializeLockState(state.map);
       this._course.set(state.course);
-      this._map.set(state.map);
-      this._sessions.set(state.sessions);
+      this._map.set(mapWithLocks);
+      this._sessions.set([]);
       this.saveAll();
    }
 
@@ -171,6 +224,54 @@ export class DashboardService {
    // ══════════════════════════════════════════════════════════════════════════
    // MÉTODOS PRIVADOS — carga y persistencia
    // ══════════════════════════════════════════════════════════════════════════
+
+   // Inicializa el estado de lock:
+   //   - Primera unit de cada module: pending
+   //   - Resto: locked
+   // Se aplica cuando se carga un curso nuevo desde el onboarding
+   private initializeLockState(map: ConceptualMap): ConceptualMap {
+      return {
+         ...map,
+         branches: map.branches.map((branch) => ({
+            ...branch,
+            modules: branch.modules.map((mod) => ({
+               ...mod,
+               units: mod.units.map((unit, index) => ({
+                  ...unit,
+                  status: index === 0 ? 'pending' : ('locked' as UnitStatus),
+               })),
+            })),
+         })),
+      };
+   }
+
+   // Desbloquea la siguiente unit del mismo module cuando una unit se completa
+   private unlockNextUnit(completedUnitId: string): void {
+      this._map.update((map) => ({
+         ...map,
+         branches: map.branches.map((branch) => ({
+            ...branch,
+            modules: branch.modules.map((mod) => {
+               const idx = mod.units.findIndex((u) => u.id === completedUnitId);
+
+               // No está en este module o no hay siguiente unit
+               if (idx === -1 || idx === mod.units.length - 1) return mod;
+
+               const nextUnit = mod.units[idx + 1];
+
+               // Solo desbloquea si la siguiente está locked
+               if (nextUnit.status !== 'locked') return mod;
+
+               return {
+                  ...mod,
+                  units: mod.units.map((u, i) =>
+                     i === idx + 1 ? { ...u, status: 'pending' as UnitStatus } : u,
+                  ),
+               };
+            }),
+         })),
+      }));
+   }
 
    // ── Carga desde localStorage (con fallback a datos por defecto) ───────────
    // Cuando haya API: reemplaza localStorage.getItem() por this.http.get()
@@ -211,6 +312,7 @@ export class DashboardService {
    }
    private saveAll(): void {
       localStorage.setItem(STORAGE_KEYS.course, JSON.stringify(this._course()));
+      localStorage.setItem(STORAGE_KEYS.course, JSON.stringify(this._course()));
       localStorage.setItem(STORAGE_KEYS.map, JSON.stringify(this._map()));
       localStorage.setItem(STORAGE_KEYS.sessions, JSON.stringify(this._sessions()));
    }
@@ -221,14 +323,15 @@ export class DashboardService {
 
    // Progreso de una unidad: done=100, in-progress=50, pending=0
    private calcUnitProgress(unit: Unit): number {
-      return { done: 100, 'in-progress': 50, pending: 0 }[unit.status];
+      return { done: 100, 'in-progress': 50, pending: 0, locked: 0 }[unit.status] ?? 0;
    }
 
    // Progreso de un módulo: promedio del progreso de sus unidades
    private calcModuleProgress(mod: Module): number {
-      if (!mod.units.length) return 0;
-      const total = mod.units.reduce((sum, u) => sum + this.calcUnitProgress(u), 0);
-      return Math.round(total / mod.units.length);
+      const activable = mod.units.filter((u) => u.status !== 'locked');
+      if (!activable.length) return 0;
+      const total = activable.reduce((sum, u) => sum + this.calcUnitProgress(u), 0);
+      return Math.round(total / activable.length);
    }
 
    // Progreso de un branch: promedio del progreso de sus módulos

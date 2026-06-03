@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Estado de una unidad (L3) — el único nivel que se actualiza manualmente
-export type UnitStatus = 'pending' | 'in-progress' | 'done';
+export type UnitStatus = 'pending' | 'in-progress' | 'done' | 'locked';
 
 // Colores disponibles para los branches L1
 export type BranchColor = 'blue' | 'purple' | 'pink';

@@ -32,6 +32,9 @@ module.exports = {
       'text-teal-700',
       'text-blue-900',
       'text-blue-700',
+      'text-teal-600', 
+      'text-amber-500', 
+      'text-blue-500',
       // Badges de número
       'bg-teal-700',
       'text-teal-50',
@@ -39,6 +42,10 @@ module.exports = {
       'text-blue-50',
       'bg-gray-300',
       'text-gray-500',
+      'bg-teal-500', 
+      'bg-amber-400', 
+      'bg-blue-400',
+      'line-through',
       // Progress bars
       'bg-teal-200',
       'bg-blue-200',
