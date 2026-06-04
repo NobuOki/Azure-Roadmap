@@ -1,81 +1,237 @@
-<!-- sidebar.component.html -->
+<!-- sidebar.component.html — actualizado -->
+
 <aside class="flex flex-col gap-2.5" aria-label="Detalle del branch">
-   <!-- Anillo de progreso global -->
-   <div class="bg-white border border-gray-200 rounded-xl p-3.5 text-center">
-      <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-2.5">Progreso global</p>
-      <svg
-         class="block mx-auto"
-         viewBox="0 0 80 80"
-         width="80"
-         height="80"
-         role="img"
-         [attr.aria-label]="overallProgress() + '% de progreso general'"
-      >
-         <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" stroke-width="6" />
-         <circle
-            cx="40"
-            cy="40"
-            r="32"
-            fill="none"
-            stroke="#185FA5"
-            stroke-width="6"
-            stroke-linecap="round"
-            [attr.stroke-dasharray]="2 * 3.14159 * 32"
-            [attr.stroke-dashoffset]="ringOffset()"
-            transform="rotate(-90 40 40)"
-            class="ring-transition"
-         />
-         <text x="40" y="45" text-anchor="middle" font-size="14" font-weight="500" fill="#185FA5">
-            {{ overallProgress() }}%
-         </text>
-      </svg>
-   </div>
 
-   <!-- Detalle del branch seleccionado -->
-   @if (selectedBranch()) {
-      <div class="bg-white border border-gray-200 rounded-xl p-3.5">
-         <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-1.5">Branch activo</p>
-         <h2 class="text-[15px] font-medium text-gray-900 mb-0.5">
-            {{ selectedBranch()!.label }}
-         </h2>
-         <p class="text-[11px] text-gray-400 mb-3">
-            {{ selectedBranch()!.modules.length }} módulos · {{ selectedBranchProgress() }}%
-         </p>
+  <!-- ── Anillo de progreso ───────────────────────────────────────────────── -->
+  <div class="bg-white border border-gray-200 rounded-xl p-3.5 text-center">
 
-         <!-- Lista de módulos del branch -->
-         @for (mod of selectedBranch()!.modules; track mod.id) {
-            <div class="mb-3">
-               <p class="text-[11px] font-medium text-gray-700 mb-1">{{ mod.label }}</p>
+    <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400 mb-2.5">
+      {{ ringLabel() }}
+    </p>
 
-               <!-- Unidades del módulo -->
-               <ul class="flex flex-col">
-                  @for (unit of mod.units; track unit.id) {
-                     <li
-                        class="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-b-0"
-                     >
-                        <span
-                           [ngClass]="getDotColor(unit.status)"
-                           class="w-1.5 h-1.5 rounded-full shrink-0"
-                           aria-hidden="true"
-                        >
-                        </span>
-                        <span class="text-[11px] text-gray-800 flex-1">
-                           {{ unit.label }}
-                        </span>
-                        @if (getUnitIcon(unit.status)) {
-                           <i
-                              [ngClass]="[getUnitIcon(unit.status), getUnitColor(unit.status)]"
-                              class="ti text-[12px] shrink-0"
-                           >
-                           </i>
-                        } @else {
-                           <span class="text-[11px] text-gray-300">—</span>
-                        }
-                     </li>
-                  }
-               </ul>
+    <svg
+      class="block mx-auto"
+      viewBox="0 0 80 80" width="80" height="80"
+      role="img"
+      [attr.aria-label]="ringProgress() + '%'">
+
+      <!-- Track fijo -->
+      <circle cx="40" cy="40" r="32"
+              fill="none" stroke="#e5e7eb" stroke-width="6"/>
+
+      <!-- Relleno animado -->
+      <circle
+        cx="40" cy="40" r="32"
+        fill="none"
+        [style.stroke]="ringColor()"
+        stroke-width="6"
+        stroke-linecap="round"
+        [attr.stroke-dasharray]="2 * 3.14159 * 32"
+        [attr.stroke-dashoffset]="ringOffset()"
+        transform="rotate(-90 40 40)"
+        class="ring-transition"/>
+
+      <!-- Porcentaje centrado -->
+      <text x="40" y="45"
+            text-anchor="middle"
+            font-size="14"
+            font-weight="500"
+            [attr.fill]="ringColor()">
+        {{ ringProgress() }}%
+      </text>
+
+    </svg>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       VISTA NEUTRAL — sin branch seleccionado
+       Muestra todos los branches con módulos y mini barra de progreso
+  ══════════════════════════════════════════════════════════════════════ -->
+  @if (!selectedBranchId()) {
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5
+                flex flex-col gap-3">
+
+      <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400">
+        Resumen del curso
+      </p>
+
+      @for (branch of branchSummaries(); track branch.id) {
+
+        <div class="flex flex-col gap-1.5">
+
+          <!-- Branch label + porcentaje -->
+          <div class="flex items-center justify-between">
+            <span class="text-[12px] font-medium text-gray-700">
+              {{ branch.label }}
+            </span>
+            <span
+              class="text-[11px] font-medium tabular-nums"
+              [ngClass]="getProgressTextColor(branch.progress)">
+              {{ branch.progress }}%
+            </span>
+          </div>
+
+          <!-- Mini barra de progreso -->
+          <div class="h-[3px] rounded-full bg-gray-100 overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-700"
+              [ngClass]="getMiniBarColor(branch.progress)"
+              [style.width.%]="branch.progress">
             </div>
-         }
+          </div>
+
+          <!-- Lista de módulos -->
+          <div class="flex flex-col gap-0.5 mt-0.5">
+            @for (mod of branch.modules; track mod.id) {
+              <span class="text-[11px] text-gray-400 pl-2
+                           border-l border-gray-100">
+                {{ mod.label }}
+              </span>
+            }
+          </div>
+
+        </div>
+
+      }
+
+    </div>
+
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       VISTA DETALLE — con branch seleccionado
+  ══════════════════════════════════════════════════════════════════════ -->
+  @if (selectedBranchId() && branchDetail()) {
+
+    <div class="bg-white border border-gray-200 rounded-xl p-3.5
+                flex flex-col gap-3">
+
+      <!-- Branch label -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-[14px] font-medium text-gray-900">
+          {{ branchDetail()!.label }}
+        </h2>
+        @if (getDetailScenario() === 'completed') {
+          <span class="text-lg">🏆</span>
+        }
       </div>
-   }
+
+      <!-- ── Escenario: sin progreso ──────────────────────────────────── -->
+      @if (getDetailScenario() === 'empty') {
+
+        <div class="flex flex-col gap-1.5">
+          <p class="text-[10px] uppercase tracking-[0.12em] text-gray-400">
+            Módulos
+          </p>
+          @for (branch of branchSummaries(); track branch.id) {
+            @if (branch.id === selectedBranchId()) {
+              @for (mod of branch.modules; track mod.id) {
+                <div class="flex items-center gap-2 py-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-gray-200 shrink-0"></span>
+                  <span class="text-[12px] text-gray-500">{{ mod.label }}</span>
+                </div>
+              }
+            }
+          }
+        </div>
+
+      }
+
+      <!-- ── Escenario: en progreso ───────────────────────────────────── -->
+      @if (getDetailScenario() === 'in-progress') {
+
+        <!-- En curso -->
+        @if (branchDetail()!.inProgress.length > 0) {
+          <div class="flex flex-col gap-1">
+            <p class="text-[10px] uppercase tracking-[0.12em] text-amber-500
+                       flex items-center gap-1">
+              <i class="ti ti-loader-2 text-[11px]"></i>
+              En curso
+            </p>
+            @for (item of branchDetail()!.inProgress; track item.unitLabel) {
+              <div class="flex flex-col gap-0.5 py-1 pl-2
+                           border-l-2 border-amber-200">
+                <span class="text-[11px] text-gray-400">{{ item.moduleLabel }}</span>
+                <span class="text-[12px] font-medium text-amber-600">
+                  {{ item.unitLabel }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Pendientes -->
+        @if (branchDetail()!.pending.length > 0) {
+          <div class="flex flex-col gap-1">
+            <p class="text-[10px] uppercase tracking-[0.12em] text-blue-500
+                       flex items-center gap-1">
+              <i class="ti ti-circle text-[11px]"></i>
+              Pendientes
+            </p>
+            @for (item of branchDetail()!.pending; track item.unitLabel) {
+              <div class="flex items-center gap-2 py-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
+                <span class="text-[12px] text-gray-500">{{ item.unitLabel }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Separador -->
+        @if (branchDetail()!.done.length > 0) {
+          <div class="h-px bg-gray-100"></div>
+        }
+
+        <!-- Completadas -->
+        @if (branchDetail()!.done.length > 0) {
+          <div class="flex flex-col gap-1">
+            <p class="text-[10px] uppercase tracking-[0.12em] text-teal-600
+                       flex items-center gap-1">
+              <i class="ti ti-check text-[11px]"></i>
+              Completadas ({{ branchDetail()!.done.length }})
+            </p>
+            @for (item of branchDetail()!.done; track item.unitLabel) {
+              <div class="flex items-center gap-2 py-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"></span>
+                <span class="text-[12px] text-teal-700 line-through
+                              decoration-teal-300">
+                  {{ item.unitLabel }}
+                </span>
+                <i class="ti ti-check text-[11px] text-teal-500 ml-auto"></i>
+              </div>
+            }
+          </div>
+        }
+
+      }
+
+      <!-- ── Escenario: completado ────────────────────────────────────── -->
+      @if (getDetailScenario() === 'completed') {
+
+        <div class="flex flex-col gap-1">
+          <p class="text-[10px] uppercase tracking-[0.12em] text-teal-600
+                     flex items-center gap-1">
+            <i class="ti ti-check text-[11px]"></i>
+            Completadas ({{ branchDetail()!.done.length }})
+          </p>
+          @for (item of branchDetail()!.done; track item.unitLabel) {
+            <div class="flex items-center gap-2 py-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"></span>
+              <span class="text-[12px] text-teal-700 line-through
+                            decoration-teal-300">
+                {{ item.unitLabel }}
+              </span>
+              <i class="ti ti-check text-[11px] text-teal-500 ml-auto"></i>
+            </div>
+          }
+        </div>
+
+      }
+
+    </div>
+
+  }
+
 </aside>

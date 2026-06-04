@@ -323,15 +323,15 @@ export class DashboardService {
 
    // Progreso de una unidad: done=100, in-progress=50, pending=0
    private calcUnitProgress(unit: Unit): number {
-      return { done: 100, 'in-progress': 50, pending: 0, locked: 0 }[unit.status] ?? 0;
+      return unit.status === 'done' ? 100 : 0; // solo done cuenta
    }
 
    // Progreso de un módulo: promedio del progreso de sus unidades
    private calcModuleProgress(mod: Module): number {
-      const activable = mod.units.filter((u) => u.status !== 'locked');
-      if (!activable.length) return 0;
-      const total = activable.reduce((sum, u) => sum + this.calcUnitProgress(u), 0);
-      return Math.round(total / activable.length);
+      const total = mod.units.length; // TODAS las units, incluyendo locked
+      if (!total) return 0;
+      const done = mod.units.filter((u) => u.status === 'done').length;
+      return Math.round((done / total) * 100);
    }
 
    // Progreso de un branch: promedio del progreso de sus módulos

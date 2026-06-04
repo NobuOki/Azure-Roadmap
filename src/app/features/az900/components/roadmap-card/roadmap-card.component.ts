@@ -23,7 +23,7 @@ export class RoadmapCardComponent {
 
    // ── Inputs / Outputs ───────────────────────────────────────────────────────
    // input() es la forma moderna de Angular 17+ (sin @Input decorator)
-   selectedBranchId = input<string>('b1');
+   selectedBranchId = input<string | null>(null);
    branchSelected = output<string>();
 
    // ── Datos del servicio ────────────────────────────────────────────────────

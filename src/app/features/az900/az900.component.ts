@@ -27,6 +27,16 @@ export class Az900Component {
    readonly studyStreak = this.svc.studyStreak;
    readonly totalBranches = computed(() => this.svc.map().branches.length);
 
-   // ── Branch seleccionado (para comunicar roadmap → sidebar) ───────────────
-   selectedBranchId = signal<string>('b1');
+   // ── Branch seleccionado ───────────────────────────────────────────────────
+   // null = sin selección → sidebar en vista neutral
+   // string = branch seleccionado → sidebar en vista detalle
+   selectedBranchId = signal<string | null>(null);
+   
+   onBranchSelected(branchId: string): void {
+      // Si hace click en el mismo branch → deselecciona (toggle)
+      this.selectedBranchId.update(current =>
+         current === branchId ? null : branchId
+      );
+   }
+
 }
