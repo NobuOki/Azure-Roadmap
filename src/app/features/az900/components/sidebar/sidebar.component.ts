@@ -19,6 +19,7 @@ import { Branch, Module, Unit } from '../../../../core/models';
 
 // Vista neutral: branch con módulos y progreso
 export interface BranchSummary {
+
    id: string;
    label: string;
    progress: number;
@@ -27,11 +28,36 @@ export interface BranchSummary {
 
 // Vista detalle: units agrupadas por estado
 export interface BranchDetail {
+
    label: string;
    progress: number;
    inProgress: { unitLabel: string; moduleLabel: string }[];
-   pending: { unitLabel: string; moduleLabel: string }[];
-   done: { unitLabel: string; moduleLabel: string }[];
+   pending: PendingModule[];
+   done: DoneModule[];
+}
+
+export interface PendingUnit {
+
+  label:  string;
+  status: 'pending' | 'locked';  // diferencia visual entre ambos
+
+}
+ 
+export interface PendingModule {
+
+  label:       string;
+  hasUnits:    boolean;           // true = tiene units activas para mostrar
+  units:       PendingUnit[];     // vacío si solo muestra el header
+
+}
+
+// ── Interface para done (mismo patrón que PendingModule) ─────────────────
+export interface DoneModule {
+
+  label:    string;
+  hasUnits: boolean;
+  units:    { label: string }[];
+  
 }
 
 @Component({
@@ -66,6 +92,7 @@ export class SidebarComponent {
    // Color del anillo según progreso
    ringColor = computed(() => {
       const p = this.ringProgress();
+
       if (p === 100) return '#0F6E56'; // teal — completado
       if (p > 0) return '#185FA5'; // blue — en progreso
       return '#D3D1C7'; // gray — sin iniciar
@@ -82,8 +109,9 @@ export class SidebarComponent {
       })),
    );
 
-   // ── Vista detalle: branch seleccionado con units agrupadas ────────────────
-   // Se muestra cuando SÍ hay branch seleccionado
+   // ── Computed branchDetail actualizado ────────────────────────────────────────
+   // Reemplaza el computed branchDetail existente en SidebarComponent
+   // ── Computed principal — solo orquesta ───────────────────────────────────
    branchDetail = computed((): BranchDetail | null => {
       const id = this.selectedBranchId();
       if (!id) return null;
@@ -92,26 +120,72 @@ export class SidebarComponent {
       if (!branch) return null;
 
       const progress = this.svc.branchProgress().find((b) => b.id === id)?.progress ?? 0;
+      return {
+         label: branch.label,
+         progress,
+         inProgress: this.getInProgressUnits(branch.modules),
+         done: this.getDoneModules(branch.modules),
+         pending: this.getPendingModules(branch.modules),
+      };
+   });
 
-      const inProgress: BranchDetail['inProgress'] = [];
-      const pending: BranchDetail['pending'] = [];
-      const done: BranchDetail['done'] = [];
+   // ── Units en curso ────────────────────────────────────────────────────────
+   private getInProgressUnits(modules: Module[]): BranchDetail['inProgress'] {
+      return modules.flatMap((mod) =>
+         mod.units
+            .filter((u) => u.status === 'in-progress')
+            .map((u) => ({ unitLabel: u.label, moduleLabel: mod.label })),
+      );
+   }
 
-      for (const mod of branch.modules) {
-         for (const unit of mod.units) {
-            if (unit.status === 'in-progress') {
-               inProgress.push({ unitLabel: unit.label, moduleLabel: mod.label });
-            } else if (unit.status === 'pending') {
-               pending.push({ unitLabel: unit.label, moduleLabel: mod.label });
-            } else if (unit.status === 'done') {
-               done.push({ unitLabel: unit.label, moduleLabel: mod.label });
-            }
-            // locked no aparece en ninguna sección
-         }
+   // ── Units completadas ─────────────────────────────────────────────────────
+   private getDoneModules(modules: Module[]): DoneModule[] {
+      return modules
+         .filter((mod) => mod.units.some((u) => u.status === 'done')) // solo modules con alguna done
+         .map((mod) => this.mapToDoneModule(mod));
+   }
+
+   private mapToDoneModule(mod: Module): DoneModule {
+      const allDone = mod.units.every((u) => u.status === 'done');
+
+      if (allDone) {
+         // Module completamente done → solo header
+         return { label: mod.label, hasUnits: false, units: [] };
       }
 
-      return { label: branch.label, progress, inProgress, pending, done };
-   });
+      // Module parcialmente done → header + units done
+      const units = mod.units.filter((u) => u.status === 'done').map((u) => ({ label: u.label }));
+
+      return { label: mod.label, hasUnits: true, units };
+   }
+
+   // ── Módulos pendientes ────────────────────────────────────────────────────
+   private getPendingModules(modules: Module[]): PendingModule[] {
+      // Encuentra el module activo — el primero con in-progress o pending
+      const activeModuleId =
+         modules.find((mod) =>
+            mod.units.some((u) => u.status === 'in-progress' || u.status === 'pending'),
+         )?.id ?? null;
+
+      return modules
+         .filter((mod) => !mod.units.every((u) => u.status === 'done'))
+         .map((mod) => this.mapToPendingModule(mod, mod.id === activeModuleId));
+   }
+
+   // ── Mapea un module a PendingModule ──────────────────────────────────────
+   private mapToPendingModule(mod: Module, isCurrentModule: boolean): PendingModule {
+      if (!isCurrentModule) {
+         // No es el module activo → solo header
+         return { label: mod.label, hasUnits: false, units: [] };
+      }
+
+      // Es el module activo → header + units pending y locked
+      const units: PendingUnit[] = mod.units
+         .filter((u) => u.status === 'pending' || u.status === 'locked')
+         .map((u) => ({ label: u.label, status: u.status as 'pending' | 'locked' }));
+
+      return { label: mod.label, hasUnits: true, units };
+   }
 
    // ── Helpers de estado ─────────────────────────────────────────────────────
 
